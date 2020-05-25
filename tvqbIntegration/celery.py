@@ -6,7 +6,7 @@ from celery import shared_task
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tvqbIntegration.settings')
 
-pfiles = ['tasks.test_task']
+pfiles = ['quickBooks.tasks']
 
 app = Celery('tvqbIntegration')
 app.config_from_object('django.conf:settings', namespace='CELERY')

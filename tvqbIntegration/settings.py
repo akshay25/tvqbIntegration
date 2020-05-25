@@ -109,6 +109,18 @@ CELERY_TASK_SERIALIZER = 'json'
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
+# QuickBooks config
+CLIENT_ID = 'ABUjbtGJ5aQRa7V5MgJ2WGXfEeR7XyWAG4sI4a2daFVdE3Wd13'
+CLIENT_SECRET = 'SOPac6cxYVH5bRLHvG8g6b3cpyUWQi3H2RFJkg6G'
+REDIRECT_URI = 'http://localhost:8000/quickbooks/webhook'
+ENVIRONMENT = 'sandbox'
+
+# QBO Base URLs
+QBO_BASE_SANDBOX = 'https://sandbox-quickbooks.api.intuit.com'
+QBO_BASE_PROD = 'https://quickbooks.api.intuit.com'
+QBO_COMPANY_ID = '4620816365047890340'
+QBO_WEBHOOK_VERIFIER = '123'
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
