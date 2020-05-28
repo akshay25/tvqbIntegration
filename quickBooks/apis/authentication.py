@@ -35,7 +35,8 @@ def refresh():
     #print([auth_client.access_token == tokens[0], auth_client.refresh_token == tokens[1]])
 
     f = open(filename, 'w')
-    f.writelines(l) for l = [auth_client.access_token, auth_client.refresh_token]
+    f.write("{0}\n", auth_client.access_token)
+    f.write("{0}\n", auth_client.refresh_token)
     f.close()
     return
 

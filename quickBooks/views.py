@@ -15,6 +15,7 @@ def webhook(request):
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
-        signature = body['intuit-signature']
-        process_webhook_data.delay(body)
+        signature = request.headers.get('intuit-signature')
+        verifier_token = settings.QBO_VERIFIER_TOKEN
+        process_webhook_data.delay(signature, body, verifier_token)
         return HttpResponse("Hello, world. You're at the quickbooks webhook.")

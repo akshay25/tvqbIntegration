@@ -15,7 +15,7 @@ def createInvoice(data):
         #log invoice creation failed
         pass
 
-def updateInvoice(data, is_sparse=true, retry_count = 5):
+def updateInvoice(data, is_sparse=True, retry_count = 5):
     invoice_id = data['Id']
     invoice = readInvoice(invoice_id)
     if invoice == None:
@@ -32,13 +32,13 @@ def updateInvoice(data, is_sparse=true, retry_count = 5):
     r = requests.post(url = url, json = data, headers = headers)
     if r.status_code == 200:
         return r.json()
-    else if r.status_code == 5010:
+    elif r.status_code == 5010:
         if retry_count > 0:
             return updateInvoice(data, is_sparse, retry_count-1)
         else:
             #log retry count over
             pass
-    else
+    else:
         # log the failed API reason
         pass
 
