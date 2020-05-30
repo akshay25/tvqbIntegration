@@ -1,9 +1,11 @@
 from intuitlib.client import AuthClient
 from intuitlib.exceptions import AuthClientError
 
+from django.conf import settings
+
 def get_access_token():
     tokens = []
-    filename = ".token"
+    filename = "quickBooks/apis/.token"
     f = open(filename, 'r')
     for line in f:
         tokens.append(line.rstrip())
@@ -12,7 +14,7 @@ def get_access_token():
 
 def refresh():
     tokens = []
-    filename = ".token"
+    filename = "quickBooks/apis/.token"
     f = open(filename, 'r')
     for line in f:
         tokens.append(line.rstrip())
@@ -32,11 +34,13 @@ def refresh():
         print(e.status_code)
         print(e.intuit_tid)
 
-    #print([auth_client.access_token == tokens[0], auth_client.refresh_token == tokens[1]])
+    print("----------")
+    print([auth_client.access_token == tokens[0], auth_client.refresh_token == tokens[1]])
+    print("----------")
 
     f = open(filename, 'w')
-    f.write("{0}\n", auth_client.access_token)
-    f.write("{0}\n", auth_client.refresh_token)
+    f.write("{0}\n".format(auth_client.access_token))
+    f.write("{0}\n".format(auth_client.refresh_token))
     f.close()
     return
 

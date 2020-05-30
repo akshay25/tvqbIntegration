@@ -9,8 +9,8 @@ def createInvoice(data):
     headers = _get_headers(access_token)
     r = requests.post(url = url, json = data, headers = headers)
     if r.status_code == 200:
+        return r.json()
         #log invoice created with id
-        pass
     else:
         #log invoice creation failed
         pass
@@ -33,6 +33,7 @@ def updateInvoice(data, is_sparse=True, retry_count = 5):
     if r.status_code == 200:
         return r.json()
     elif r.status_code == 5010:
+        print(r.content)
         if retry_count > 0:
             return updateInvoice(data, is_sparse, retry_count-1)
         else:
@@ -51,7 +52,7 @@ def readInvoice(invoice_id):
         return r.json()
     else:
         #log read invoice API failed
-        pass
+        return {'error': "Not found"}
 
 def _get_url():
     realm_id = settings.QBO_COMPANY_ID
