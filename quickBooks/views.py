@@ -13,7 +13,6 @@ from quickBooks.apis.invoice import createInvoice, updateInvoice, readInvoice
 @csrf_exempt
 def webhook(request):
     if request.method == 'POST':
-        import pdb; pdb.set_trace()
         body_unicode = request.body.decode('utf-8')
         signature = request.headers.get('Intuit-Signature')
         verifier_token = settings.QBO_VERIFIER_TOKEN
