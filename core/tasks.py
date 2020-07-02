@@ -4,10 +4,26 @@ from celery.decorators import task
 
 import base64, hmac, hashlib, json
 
-from quickBooks.apis.invoice import readInvoice
+from core.apis.quickBooks.invoice import readInvoice
+from core.apis.trackvia.invoice import getFullInvoiceData
+from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 
 @shared_task
-def process_webhook_data(signature, body_unicode, verifier_token):
+def process_tv_webhook(table_id, view_id, record_id, event_type):
+    if event_type == 'AFTER_CREATE':
+        print('ignoring because AFTER_CREATE event is fired')
+        return
+    elif event_type == 'AFTER_UPDATE':
+        record = getFullInvoiceData(record_id)
+        if record['invoice_data']['STATUS'] != 'SENT':
+            print('ignoring as the record is not in SENT state')
+            return
+        updateInvoiceInQB(record)
+    elif event_type == 'AFTER_DELETE':
+        deleteInvoiceFromQB(record)
+
+@shared_task
+def process_qb_webhook(signature, body_unicode, verifier_token):
     # validate data
     # process it
     print('validating data.. ##################')
@@ -18,14 +34,15 @@ def process_webhook_data(signature, body_unicode, verifier_token):
         # log tempered webhook data
         return
 
-@shared_task
+
+# HELPER functions
+# -----------------------------------------------------#
+
+
 def setInvoiceStatusInTV(qb_invoice_id, status):
     # call TV handlers to set invoice status
     print('------------------------')
     print('setStatusInTV', qb_invoice_id, status)
-
-# HELPER functions
-# -----------------------------------------------------#
 
 def verifyWebhookData(body_unicode, signature, verifier_token):
     bvt = verifier_token.encode()
@@ -66,7 +83,7 @@ def process_invoice(invoice_id):
         print('tot_amt == balance')
         return
     elif balance == 0:
-        setInvoiceStatusInTV.delay(invoice_id, 'FullPayment')
+        setInvoiceStatusInTV(invoice_id, 'FullPayment')
     elif balance < total_amt and balance > 0:
-        setInvoiceStatusInTV.delay(invoice_id, 'PartialPayment')
+        setInvoiceStatusInTV(invoice_id, 'PartialPayment')
     return

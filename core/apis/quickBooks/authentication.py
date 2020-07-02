@@ -5,7 +5,7 @@ from django.conf import settings
 
 def get_access_token():
     tokens = []
-    filename = "quickBooks/apis/.token"
+    filename = "core/apis/quickBooks/.token"
     f = open(filename, 'r')
     for line in f:
         tokens.append(line.rstrip())
@@ -14,17 +14,17 @@ def get_access_token():
 
 def refresh():
     tokens = []
-    filename = "quickBooks/apis/.token"
+    filename = "core/apis/quickBooks/.token"
     f = open(filename, 'r')
     for line in f:
         tokens.append(line.rstrip())
     f.close()
 
     auth_client = AuthClient(
-        settings.CLIENT_ID,
-        settings.CLIENT_SECRET,
-        settings.REDIRECT_URI,
-        settings.ENVIRONMENT,
+        settings.QB_CLIENT_ID,
+        settings.QB_CLIENT_SECRET,
+        settings.QB_REDIRECT_URI,
+        settings.QB_ENVIRONMENT,
         access_token=tokens[0],
         refresh_token=tokens[1],
     )

@@ -1,6 +1,7 @@
-from trackvia.apis.authentication import get_access_token
 from django.conf import settings
 import requests
+
+from core.apis.trackvia.authentication import get_access_token
 
 def updateInvoiceStatus(invoice_id, status):
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5429&viewId=4118'.format(invoice_id)

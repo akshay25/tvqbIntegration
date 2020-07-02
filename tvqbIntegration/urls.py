@@ -17,7 +17,6 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('quickbooks/', include('quickBooks.urls')),
-    path('trackvia/', include('trackvia.urls')),
+    path('core/', include('core.urls')),
     path('admin/', admin.site.urls),
 ]

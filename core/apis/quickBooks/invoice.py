@@ -1,12 +1,13 @@
 import requests
 from django.conf import settings
-from quickBooks.apis.authentication import get_access_token
+from core.apis.quickBooks.authentication import get_access_token
 
 
 def createInvoice(data):
     access_token = get_access_token()
     url = _get_url()
     headers = _get_headers(access_token)
+    import pdb; pdb.set_trace()
     r = requests.post(url = url, json = data, headers = headers)
     if r.status_code == 200:
         return r.json()
@@ -47,6 +48,7 @@ def readInvoice(invoice_id):
     access_token = get_access_token()
     url = _get_url() + '/' + invoice_id
     headers = _get_headers(access_token)
+    import pdb; pdb.set_trace()
     r = requests.get(url = url, headers = headers)
     if r.status_code == 200:
         return r.json()
@@ -54,9 +56,22 @@ def readInvoice(invoice_id):
         #log read invoice API failed
         return {'error': "Not found"}
 
+def deleteInvoice(invoice_id):
+    pass
+   # access_token = get_access_token()
+   # url = _get_url() + '/' + invoice_id
+   # headers = _get_headers(access_token)
+   # import pdb; pdb.set_trace()
+   # r = requests.delete(url = url, headers = headers)
+   # if r.status_code == 200:
+   #     return
+   # else:
+   #     #log read invoice API failed
+   #     return {'error': "Not found"}
+
 def _get_url():
     realm_id = settings.QBO_COMPANY_ID
-    if settings.ENVIRONMENT == 'production':
+    if settings.QB_ENVIRONMENT == 'production':
         base_url = settings.QBO_BASE_PROD
     else:
         base_url =  settings.QBO_BASE_SANDBOX
