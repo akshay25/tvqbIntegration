@@ -6,6 +6,9 @@ from celery import shared_task
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tvqbIntegration.settings')
 
+import django
+django.setup()
+
 pfiles = ['core.tasks']
 
 app = Celery('tvqbIntegration')

@@ -3,7 +3,7 @@ import requests
 
 from core.apis.trackvia.authentication import get_access_token
 
-def updateInvoiceStatus(invoice_id, status):
+def updateTvInvoiceStatus(invoice_id, status):
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5429&viewId=4118'.format(invoice_id)
     params = {
         'access_token': get_access_token(),
@@ -12,23 +12,24 @@ def updateInvoiceStatus(invoice_id, status):
     body = {
             'id': invoice_id,
             'data': [
-                {'id': 267437, 'fieldMetaId': 18716, 'type': "dropDown", 'value': status}
+                {'fieldMetaId': 21443, 'id': 279131, 'type': 'dropDown', 'value': status}
                 ]
             }
     r = requests.put(url = url, params = params, json = body)
     if r.status_code != 200:
-        #log
-        pass
+        print('payment status not updated')
 
 def getFullInvoiceData(invoice_id):
     invoice_data = getInvoiceData(invoice_id)
     invoice_item_data = getInvoiceItems(invoice_id)
+
+    print('tv invoice:', invoice_data)
+    print('^^^^^^^^^^')
+    print('tv items', invoice_item_data)
     return {
             'invoice_data': invoice_data,
             'invoice_items': invoice_item_data
             }
-
-#["DRAFT", "SEND - CREATE DOCUMENT", "SENT", "PARTIALLY PAID", "PAID"]
 
 def getInvoiceData(invoice_id):
     url = "https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?viewId=4118&formId=5429".format(invoice_id)
@@ -51,7 +52,6 @@ def getInvoiceData(invoice_id):
             18314: 'CONTRACTOR',
             19497: 'CONTRACTOR EMAIL',
             16412: 'MARGIN %',
-            16411: 'TAX %',
             16410: 'FREIGHT %',
             18316: 'PROCUREMENT MANAGER',
             21131: 'WAREHOUSING %',
@@ -59,8 +59,10 @@ def getInvoiceData(invoice_id):
             19545: 'INV SALES TAX',
             19546: 'INV FREIGHT',
             21130: 'INV WAREHOUSING',
+            18042: 'PAYMENT TERMS',
+            23350: 'SALE TAX'
             }
-    ref_field_set = set([18720, 18717])
+    ref_field_set = set([18720, 18717, 18314, 18042, 23350])
     data = r.json()['data']
     invoice = {}
     for field in data:
@@ -70,12 +72,15 @@ def getInvoiceData(invoice_id):
         value = field['value'] if 'value' in field else ''
         if 'value' in field:
             if field['fieldMetaId'] in ref_field_set:
-                value = field['identifier']
+                value = field['identifier'] if 'identifier' in field else ''
             else:
-                value = field['value']
+                value =  field['value'] if 'value' in field else ''
         else:
             value = ''
         invoice[key] = value
+    if 'PAYMENT TERMS' not in invoice or invoice['PAYMENT TERMS'] == '':
+        invoice['PAYMENT TERMS'] = 'NET 30'
+    invoice['tv_id'] = invoice_id
     return invoice
 
 def getInvoiceItems(record_id):
