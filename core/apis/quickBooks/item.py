@@ -24,13 +24,14 @@ def createItem(item_name):
     data = {
             'Name': item_name,
             'Type': 'NonInventory',
+            'Taxable': True,
             "ExpenseAccountRef": {
-                "name": "Cost of Goods Sold",
-                "value": "80"
+                # "name": "Cost of Goods Sold",
+                "value": "47"
               },
             "IncomeAccountRef": {
-                "name": "Sales of Product Income",
-                "value": "79"
+                # "name": "Sales of Product Income",
+                "value": "1"
               },
             # "AssetAccountRef": {
             #     "name": "Inventory Asset",
