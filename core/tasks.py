@@ -7,6 +7,7 @@ import base64, hmac, hashlib, json
 
 from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
+from core.apis.quickBooks.authentication import refresh
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.models import InvoiceRef
@@ -21,14 +22,17 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
         if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
             print('ignoring as the record is not in SENT state or it is a test project.')
             return
+        refresh()
         updateInvoiceInQB(record)
     elif event_type == 'AFTER_DELETE':
+        refresh()
         deleteInvoiceFromQB(record_id)
 
 @shared_task
 def process_qb_webhook(signature, body_unicode, verifier_token):
     print('validating data.. ##################')
     if verifyWebhookData(body_unicode, signature, verifier_token):
+        refresh()
         processInvoiceWebhookData(body_unicode)
     else:
         print('webhook data temepered $$$$$$$---------')
