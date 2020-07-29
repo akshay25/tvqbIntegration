@@ -54,13 +54,12 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
 # -----------------------------------------------------#
 
 def isTestProject(record):
+    if 'PROJECT' not in record['invoice_data']:
+        return False
+    project = record['invoice_data']['PROJECT']
+    if re.search('test', project, re.IGNORECASE):
+        return True
     return False
-    # if 'PROJECT' not in record['invoice_data']:
-    #     return False
-    # project = record['invoice_data']['PROJECT']
-    # if re.search('test', project, re.IGNORECASE):
-    #     return True
-    # return False
 
 
 def verifyWebhookData(body_unicode, signature, verifier_token):
