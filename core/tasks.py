@@ -4,6 +4,7 @@ from celery.decorators import task
 
 import re
 import base64, hmac, hashlib, json
+import traceback
 
 from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
@@ -32,8 +33,18 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
 def process_qb_webhook(signature, body_unicode, verifier_token):
     print('validating data.. ##################')
     if verifyWebhookData(body_unicode, signature, verifier_token):
-        refresh()
-        processInvoiceWebhookData(body_unicode)
+        try:
+            refresh()
+            processInvoiceWebhookData(body_unicode)
+        except Exception as e:
+            data = json.loads(body_unicode)
+            payment_ids = []
+            entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
+            for entity in entities:
+                if entity['name'] == 'Payment':
+                    payment_ids.append(entity['id'])
+            logger.error('error updating payment status in trackvia: {0} and got error {2}'.format(', '.join(payment_ids), traceback.format_exc()))
+            send_email('TV-QBO integeration error', 'We got an error updating payment status in trackvia: {0}.'.format(', '.join(payment_ids)))
     else:
         print('webhook data temepered $$$$$$$---------')
         return
@@ -43,12 +54,13 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
 # -----------------------------------------------------#
 
 def isTestProject(record):
-    if 'PROJECT' not in record['invoice_data']:
-        return False
-    project = record['invoice_data']['PROJECT']
-    if re.search('test', project, re.IGNORECASE):
-        return True
     return False
+    # if 'PROJECT' not in record['invoice_data']:
+    #     return False
+    # project = record['invoice_data']['PROJECT']
+    # if re.search('test', project, re.IGNORECASE):
+    #     return True
+    # return False
 
 
 def verifyWebhookData(body_unicode, signature, verifier_token):

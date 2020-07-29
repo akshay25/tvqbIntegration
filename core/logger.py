@@ -1,2 +1,2 @@
 import logging
-logger = logging.getLogger('test_logger')
+logger = logging.getLogger('qb_tv_logger')
