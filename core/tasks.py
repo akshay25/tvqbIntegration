@@ -1,10 +1,10 @@
 from celery import shared_task
 from celery.contrib import rdb
-from celery.decorators import task
 
 import re
 import base64, hmac, hashlib, json
 import traceback
+from datetime import date, timedelta
 
 from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
@@ -12,6 +12,10 @@ from core.apis.quickBooks.authentication import refresh
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.models import InvoiceRef
+from tvqbIntegration.utility.s3 import upload_file
+
+from django.conf import settings
+
 
 @shared_task
 def process_tv_webhook(table_id, view_id, record_id, event_type):
@@ -50,6 +54,15 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
         return
 
 
+#beat function
+@shared_task
+def push_logs_to_S3():
+    yesterday = date.today() - timedelta(days=1)
+    filepath = settings.BASE_DIR + '/debug.log.' + yesterday.strftime('%Y-%m-%d')
+    filename = 'debug.log.' + yesterday.strftime('%Y-%m-%d')
+    upload_file(filename, filepath)
+
+
 # HELPER functions
 # -----------------------------------------------------#
 
@@ -63,16 +76,19 @@ def isTestProject(record):
 
 
 def verifyWebhookData(body_unicode, signature, verifier_token):
-    bvt = verifier_token.encode()
-    body = body_unicode.encode()
-    hmac_hex_digest = hmac.new(
-        bvt,
-        body,
-        hashlib.sha256
-    ).hexdigest()
-    decoded_hex_signature = base64.b64decode(signature).hex()
-    print(hmac_hex_digest == decoded_hex_signature, ' ^^^^^^^^^^^^^')
-    return hmac_hex_digest == decoded_hex_signature
+    try:
+        bvt = verifier_token.encode()
+        body = body_unicode.encode()
+        hmac_hex_digest = hmac.new(
+            bvt,
+            body,
+            hashlib.sha256
+        ).hexdigest()
+        decoded_hex_signature = base64.b64decode(signature).hex()
+        print(hmac_hex_digest == decoded_hex_signature, ' ^^^^^^^^^^^^^')
+        return hmac_hex_digest == decoded_hex_signature
+    except Exception as e:
+        return False
 
 def processInvoiceWebhookData(body_unicode):
     data = json.loads(body_unicode)
