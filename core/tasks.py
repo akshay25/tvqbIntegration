@@ -32,8 +32,6 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
                 return
             refresh()
             updateInvoiceInQB(record)
-            refresh()
-            updateInvoiceInQB(record)
         elif event_type == 'AFTER_DELETE':
             refresh()
             deleteInvoiceFromQB(record_id)
