@@ -77,3 +77,21 @@ def getReferencedFieldMappings():
         (22108, 'BILL PDF'),
         (20489, 'CREDIT CARD')
     ))
+
+
+def updateTvInvoiceStatus(bill_id, status):
+    url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?formId=5429&viewId=4118'\
+        .format(bill_id)
+    params = {
+        'access_token': get_access_token(),
+        'user_key': settings.TRACKVIA_USER_KEY
+    }
+    body = {
+            'id': bill_id,
+            'data': [
+                {'fieldMetaId': 24127, 'id': 279131, 'type': 'dropDown', 'value': status}
+                ]
+            }
+    r = requests.put(url = url, params = params, json = body)
+    if r.status_code != 200:
+        print('payment status not updated')

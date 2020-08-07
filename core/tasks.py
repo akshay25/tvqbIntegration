@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
 from core.apis.quickBooks.authentication import refresh
+from core.apis.trackvia.bills import getBillDetailsById
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.models import InvoiceRef
@@ -17,21 +18,43 @@ from tvqbIntegration.utility.s3 import upload_file
 from django.conf import settings
 
 
+invoice_table_id = '740'
+invoice_view_id = '4027'
+bill_table_id = '786'
+bill_view_id = '4205'
+
 @shared_task
 def process_tv_webhook(table_id, view_id, record_id, event_type):
-    if event_type == 'AFTER_CREATE':
-        print('ignoring because AFTER_CREATE event is fired')
-        return
-    elif event_type == 'AFTER_UPDATE':
-        record = getFullInvoiceData(record_id)
-        if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
-            print('ignoring as the record is not in SENT state or it is a test project.')
+    if invoice_table_id == table_id and invoice_view_id == view_id:
+        if event_type == 'AFTER_CREATE':
+            print('ignoring invoice because AFTER_CREATE event is fired')
             return
-        refresh()
-        updateInvoiceInQB(record)
-    elif event_type == 'AFTER_DELETE':
-        refresh()
-        deleteInvoiceFromQB(record_id)
+        elif event_type == 'AFTER_UPDATE':
+            record = getFullInvoiceData(record_id)
+            if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
+                print('ignoring as the record is not in SENT state or it is a test project.')
+                return
+            refresh()
+            updateInvoiceInQB(record)
+            refresh()
+            updateInvoiceInQB(record)
+        elif event_type == 'AFTER_DELETE':
+            refresh()
+            deleteInvoiceFromQB(record_id)
+    elif bill_table_id == table_id and bill_view_id == view_id:
+        if event_type == 'AFTER_CREATE':
+            print('ignoring bill because AFTER_CREATE event is fired')
+            return
+        elif event_type == 'AFTER_UPDATE':
+            bill = getBillDetailsById(record_id)
+            if bill['STATUS'] != 'SENT':
+                print('ignoring as the record is not in SENT state or it is a test project.')
+                return
+        elif event_type == 'AFTER_DELETE':
+            refresh()
+    else:
+        pass
+
 
 @shared_task
 def process_qb_webhook(signature, body_unicode, verifier_token):
