@@ -17,29 +17,31 @@ def getBillDetailsById(bill_id):
         url=request_url,
         params=params)
 
+    if response.status_code != 200:
+        # log
+        pass
+
     response_data_dict = response.json()['data']
     field_mappings = getFieldMappings()
     ref_field_mappings = getReferencedFieldMappings()
     return_dict = {}
 
     for field in response_data_dict:
-        if 'fieldMetaId' not in field.keys or field['fieldMetaId'] not in field_mappings.keys():
+        if field.get('fieldMetaId') not in field_mappings.keys() and \
+                field.get('fieldMetaId') not in ref_field_mappings.keys():
             continue
 
         key_name = field_mappings.get(field.get('fieldMetaId'))
+        if not key_name:
+            key_name = ref_field_mappings.get(field.get('fieldMetaId'))
         value = field.get('value', '')
 
-        if value in field.keys():
-            if field.get('fieldMetaId') in ref_field_mappings.keys():
-                value = field.get('identifier', '')
-        else:
-            value = ''
+        if field.get('fieldMetaId') in ref_field_mappings.keys():
+            value = field.get('identifier', '')
 
         return_dict[key_name] = value
 
-    if response.status_code != 200:
-        # log
-        pass
+    return return_dict
 
 
 def getFieldMappings():
@@ -87,11 +89,11 @@ def updateTvInvoiceStatus(bill_id, status):
         'user_key': settings.TRACKVIA_USER_KEY
     }
     body = {
-            'id': bill_id,
-            'data': [
-                {'fieldMetaId': 24127, 'id': 279131, 'type': 'dropDown', 'value': status}
-                ]
-            }
-    r = requests.put(url = url, params = params, json = body)
+        'id': bill_id,
+        'data': [
+            {'fieldMetaId': 21740, 'id': 284093, 'type': 'dropDown', 'value': status}
+        ]
+    }
+    r = requests.put(url=url, params=params, json=body)
     if r.status_code != 200:
         print('payment status not updated')
