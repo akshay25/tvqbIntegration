@@ -23,6 +23,11 @@ invoice_view_id = '4027'
 bill_table_id = '786'
 bill_view_id = '4205'
 
+invoice_table_id = '740'
+invoice_view_id = '4027'
+bill_table_id = '786'
+bill_view_id = '4205'
+
 @shared_task
 def process_tv_webhook(table_id, view_id, record_id, event_type):
     if invoice_table_id == table_id and invoice_view_id == view_id:
