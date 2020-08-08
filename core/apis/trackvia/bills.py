@@ -41,6 +41,9 @@ def getBillDetailsById(bill_id):
 
         return_dict[key_name] = value
 
+    if return_dict.get('BILL PDF LINK') and return_dict.get('BILL PDF'):
+        downloadAndSavePdf(return_dict.get('BILL PDF LINK'), return_dict.get('BILL PDF'))
+        
     return return_dict
 
 
@@ -97,3 +100,10 @@ def updateTvInvoiceStatus(bill_id, status):
     r = requests.put(url=url, params=params, json=body)
     if r.status_code != 200:
         print('payment status not updated')
+
+
+def downloadAndSavePdf(pdf_link, pdf_name):
+    r = requests.get(pdf_link)
+    with open('/tmp/' + pdf_name, 'wb') as f:
+        f.write(r.content)
+
