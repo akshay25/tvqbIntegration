@@ -2,7 +2,7 @@ import requests
 import urllib.parse
 
 from django.conf import settings
-from core.apis.quickBooks.authentication import get_access_token
+from core.apis.quickBooks.authentication import get_access_token, refresh
 
 def queryItem(item_name):
     access_token = get_access_token()

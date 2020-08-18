@@ -43,7 +43,8 @@ def getBillDetailsById(bill_id):
 
     if return_dict.get('BILL PDF LINK') and return_dict.get('BILL PDF'):
         downloadAndSavePdf(return_dict.get('BILL PDF LINK'), return_dict.get('BILL PDF'))
-        
+
+    return_dict['bill_id'] = bill_id
     return return_dict
 
 
@@ -84,7 +85,7 @@ def getReferencedFieldMappings():
     ))
 
 
-def updateTvInvoiceStatus(bill_id, status):
+def updateTvBillStatus(bill_id, status):
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?formId=5429&viewId=4118'\
         .format(bill_id)
     params = {
@@ -94,7 +95,12 @@ def updateTvInvoiceStatus(bill_id, status):
     body = {
         'id': bill_id,
         'data': [
-            {'fieldMetaId': 21740, 'id': 284093, 'type': 'dropDown', 'value': status}
+            {
+                'fieldMetaId': 21740,
+                'id': 284093,
+                'type': 'dropDown',
+                'value': status
+            }
         ]
     }
     r = requests.put(url=url, params=params, json=body)

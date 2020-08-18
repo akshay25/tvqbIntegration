@@ -6,27 +6,24 @@ import base64, hmac, hashlib, json
 import traceback
 from datetime import date, timedelta
 
+from core.apis.quickBooks.bill import readBillFromQB
 from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
 from core.apis.quickBooks.authentication import refresh
-from core.apis.trackvia.bills import getBillDetailsById
+from core.apis.trackvia.bills import getBillDetailsById, updateTvBillStatus
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
-from core.models import InvoiceRef
+from core.billEvaluator import updateBIllInQB
+from core.models import InvoiceRef, BillExpenseReference
 from tvqbIntegration.utility.s3 import upload_file
 
 from django.conf import settings
 
-
 invoice_table_id = '740'
 invoice_view_id = '4027'
 bill_table_id = '786'
 bill_view_id = '4205'
 
-invoice_table_id = '740'
-invoice_view_id = '4027'
-bill_table_id = '786'
-bill_view_id = '4205'
 
 @shared_task
 def process_tv_webhook(table_id, view_id, record_id, event_type):
@@ -45,14 +42,18 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
             refresh()
             deleteInvoiceFromQB(record_id)
     elif bill_table_id == table_id and bill_view_id == view_id:
+        # from celery.contrib import rdb
+        # rdb.set_trace()
         if event_type == 'AFTER_CREATE':
             print('ignoring bill because AFTER_CREATE event is fired')
             return
         elif event_type == 'AFTER_UPDATE':
-            bill = getBillDetailsById(record_id)
-            if bill['STATUS'] != 'SENT':
+            bill_dict = getBillDetailsById(record_id)
+            if bill_dict['STATUS'] != 'APPROVED':
                 print('ignoring as the record is not in SENT state or it is a test project.')
                 return
+            refresh()
+            updateBIllInQB(bill_dict)
         elif event_type == 'AFTER_DELETE':
             refresh()
     else:
@@ -65,7 +66,7 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
     if verifyWebhookData(body_unicode, signature, verifier_token):
         try:
             refresh()
-            processInvoiceWebhookData(body_unicode)
+            processWebhookData(body_unicode)
         except Exception as e:
             data = json.loads(body_unicode)
             payment_ids = []
@@ -73,14 +74,38 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
             for entity in entities:
                 if entity['name'] == 'Payment':
                     payment_ids.append(entity['id'])
-            logger.error('error updating payment status in trackvia: {0} and got error {2}'.format(', '.join(payment_ids), traceback.format_exc()))
-            send_email('TV-QBO integeration error', 'We got an error updating payment status in trackvia: {0}.'.format(', '.join(payment_ids)))
+            logger.error(
+                'error updating payment status in trackvia: {0} and got error {2}'.format(', '.join(payment_ids),
+                                                                                          traceback.format_exc()))
+            send_email('TV-QBO integeration error',
+                       'We got an error updating payment status in trackvia: {0}.'.format(', '.join(payment_ids)))
     else:
         print('webhook data temepered $$$$$$$---------')
         return
 
 
-#beat function
+# @shared_task
+# def process_qb_webhook(signature, body_unicode, verifier_token):
+#     print('validating data.. ##################')
+#     if verifyWebhookData(body_unicode, signature, verifier_token):
+#         try:
+#             refresh()
+#             processInvoiceWebhookData(body_unicode)
+#         except Exception as e:
+#             data = json.loads(body_unicode)
+#             payment_ids = []
+#             entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
+#             for entity in entities:
+#                 if entity['name'] == 'Payment':
+#                     payment_ids.append(entity['id'])
+#             logger.error('error updating payment status in trackvia: {0} and got error {2}'.format(', '.join(payment_ids), traceback.format_exc()))
+#             send_email('TV-QBO integeration error', 'We got an error updating payment status in trackvia: {0}.'.format(', '.join(payment_ids)))
+#     else:
+#         print('webhook data temepered $$$$$$$---------')
+#         return
+
+
+# beat function
 @shared_task
 def push_logs_to_S3():
     yesterday = date.today() - timedelta(days=1)
@@ -116,21 +141,36 @@ def verifyWebhookData(body_unicode, signature, verifier_token):
     except Exception as e:
         return False
 
-def processInvoiceWebhookData(body_unicode):
+
+def processWebhookData(body_unicode):
     data = json.loads(body_unicode)
     print('processInvoiceWebhookData')
     payment_ids = []
+    bill_payment_ids = []
     entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
     for entity in entities:
         if entity['name'] == 'Payment':
             payment_ids.append(entity['id'])
+        elif entity['name'] == 'Bill Payment':
+            bill_payment_ids.append(entity['id'])
+
     print(payment_ids, "!!!!!!!!!!!")
+    print(bill_payment_ids, " &&&&&&&&&&&")
+
+    processInvoices(payment_ids)
+
+    processBills(bill_payment_ids)
+
+    return
+
+
+def processInvoices(payment_ids):
     invoice_ids = []
     for payment_id in payment_ids:
         payment = readPayment(payment_id)
         if payment == None:
             print('payment not found for id ', payment_id)
-            return
+            break
         lines = payment['Payment']['Line']
         for line in lines:
             for ltxn in line['LinkedTxn']:
@@ -139,7 +179,7 @@ def processInvoiceWebhookData(body_unicode):
     invoice_ids = list(set(invoice_ids))
     for invoice_id in invoice_ids:
         process_invoice(invoice_id)
-    return
+
 
 def process_invoice(invoice_id):
     invoice = readInvoice(invoice_id)
@@ -160,4 +200,52 @@ def process_invoice(invoice_id):
         updateTvInvoiceStatus(tv_invoice_id, 'FULL')
     elif balance < total_amt and balance > 0:
         updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL')
+    return
+
+
+def processBills(payment_ids):
+    bill_ids = []
+    for payment_id in payment_ids:
+        payment = readPayment(payment_id)
+        if not payment:
+            print('payment not found for id ', payment_id)
+            break
+        lines = payment['Payment']['Line']
+        for line in lines:
+            for ltxn in line['LinkedTxn']:
+                if ltxn['TxnType'] == 'Bill':  # Confirm this type
+                    bill_ids.append(ltxn['TxnId'])
+    bill_ids = list(set(bill_ids))
+    for bill_id in bill_ids:
+        process_bill(bill_id)
+
+
+def process_bill(bill_id):
+    bill = readBillFromQB(bill_id)
+
+    if not bill:
+        print('bill not found for id ', bill_id)
+        return
+
+    print(bill)
+
+    total_amt = bill.get('Bill').get('TotalAmt')
+    balance = bill.get('Bill').get('Balance')
+    print(total_amt, balance, '************************')
+
+    bill_referance = BillExpenseReference.getBillExpenseReferanceByTvId(bill_id)
+
+    if not bill_referance:
+        return
+
+    tv_id = bill_referance.tv_id
+
+    if total_amt == balance:
+        updateTvBillStatus(tv_id, 'UNPAID')
+    elif balance == 0:
+        updateTvBillStatus(tv_id, 'FULL')
+    elif 0 < balance < total_amt:
+        updateTvBillStatus(tv_id, 'PARTIAL')
+
+    #   # Bill payment Logic
     return
