@@ -151,7 +151,7 @@ def processWebhookData(body_unicode):
     for entity in entities:
         if entity['name'] == 'Payment':
             payment_ids.append(entity['id'])
-        elif entity['name'] == 'Bill Payment':
+        elif entity['name'] == 'BillPayment':
             bill_payment_ids.append(entity['id'])
 
     print(payment_ids, "!!!!!!!!!!!")
