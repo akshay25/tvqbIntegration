@@ -1,9 +1,11 @@
 from core.apis.quickBooks.item import queryItem
 from core.apis.quickBooks.vendor import getVendor
+from core.email import send_email
+from core.logger import logger
+
 
 item_1_name = "Cost of Goods Sold:Purchases"
-# item_2_name = "FREIGHT CHARGE"
-item_2_name = "Warehousing"
+item_2_name = "Freight"
 
 
 def billToExpense(bill_dict):
@@ -17,7 +19,7 @@ def _billMapper(bill_dict):
         'VendorRef': _getVendorRef(bill_dict.get('MANUFACTURER')),
         'TotalAmt': bill_dict.get('BILL TOTAL'),
         'Line': _getLineItems(
-            bill_dict.get('SUBTOTAL'), bill_dict.get('FRIEGHT_CHARGE'), bill_dict.get('PO# FROM DOCPARSER')),
+            bill_dict.get('SUBTOTAL'), bill_dict.get('FREIGHT')),
         # 'status': _getPaymentStatus(bill_dict.get('PAYMENT STATUS')),
         'SyncToken': 1
         # 'BillPDF': bill_dict.get('BILL PDF LINK')
@@ -48,28 +50,30 @@ def _getPaymentStatus(key):
     return status_mapping_dict.get(key, 'Draft')  # Discus Logic
 
 
-def _getLineItems(subtotal, frieght_charge, po_from_docparser):
+def _getLineItems(subtotal, freight_charge):
     lineList = []
 
     item_1 = queryItem(item_1_name)
     if item_1 and item_1.get('item'):
         lineList.append(
             {
-                'Id': '1',
-                'LineNum': '1',
-                'LinkedTxn': [],  # Logic to be discussed if any
+                # 'Id': '1',
+                # 'LineNum': '1',
+                'Description': "{0}/{1}".format(
+                    item_1.get('item').get('Type'),
+                    item_1.get('item').get('Description')),
                 'Amount': subtotal if subtotal else '0',
-                'DetailType': 'AccountBasedExpenseLineDetail',  # Logic to be discussed
-                'AccountBasedExpenseLineDetail': {
-                    'AccountRef': {
+                'DetailType': 'ItemBasedExpenseLineDetail',  # Logic to be discussed
+                'ItemBasedExpenseLineDetail': {
+                    'Qty': '1',  # item_1.get('item').get('#### '),
+                    'UnitPrice': item_1.get('item').get('Unit CN'),
+                    # 'Amount': item_1.get('item').get('Total CN'),
+                    'ItemRef': {
                         'name': item_1.get('item').get('Name'),
                         'value': item_1.get('item').get('Id')
-                    }
-                },
-                # 'BillableStatus': "NotBillable",  # Logic to be discussed
-                # 'TaxCodeRef': {
-                #     'value': "NON"  # Logic to be discussed
-                # }
+                    },
+                    'TaxCodeRef': {'value': 'TAX'}
+                }
             }
         )
 
@@ -77,21 +81,23 @@ def _getLineItems(subtotal, frieght_charge, po_from_docparser):
     if item_2 and item_2.get('item'):
         lineList.append(
             {
-                'Id': '1',
-                'LineNum': '1',
-                'LinkedTxn': [],  # Logic to be discussed if any
-                'Amount': frieght_charge if frieght_charge else '0',
-                'DetailType': 'AccountBasedExpenseLineDetail',  # Logic to be discussed
-                'AccountBasedExpenseLineDetail': {
-                    'AccountRef': {
+                # 'Id': '1',
+                # 'LineNum': '2',
+                'Description': "{0}/{1}".format(
+                    item_2.get('item').get('Type'),
+                    item_2.get('item').get('Description')),
+                'Amount': freight_charge if freight_charge else '0',
+                'DetailType': 'ItemBasedExpenseLineDetail',  # Logic to be discussed
+                'ItemBasedExpenseLineDetail': {
+                    'Qty': '1',  # item_1.get('item').get('#### '),
+                    'UnitPrice': item_2.get('item').get('Unit CN'),
+                    # 'Amount': item_2.get('item').get('Total CN'),
+                    'ItemRef': {
                         'name': item_2.get('item').get('Name'),
                         'value': item_2.get('item').get('Id')
-                    }
-                },
-                # 'BillableStatus': "NotBillable",  # Logic to be discussed
-                # 'TaxCodeRef': {
-                #     'value': "NON"  # Logic to be discussed
-                # }
+                    },
+                    'TaxCodeRef': {'value': 'TAX'}
+                }
             }
         )
 

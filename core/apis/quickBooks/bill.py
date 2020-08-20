@@ -4,8 +4,6 @@ from core.apis.quickBooks.authentication import get_access_token, refresh
 
 
 def createBillInQB(data):
-    # import pdb;pdb.set_trace()
-    # refresh()
     access_token = get_access_token()
     url = _get_url()
     headers = _get_headers(access_token)
@@ -20,6 +18,13 @@ def createBillInQB(data):
 def _get_url():
     realm_id = settings.QBO_COMPANY_ID
     route = '{0}/v3/company/{1}/bill?minorversion=52'.format(settings.QBO_BASE_URL, realm_id)
+    return route
+
+
+def _get_read_url(bill_id):
+    realm_id = settings.QBO_COMPANY_ID
+    route = '{0}/v3/company/{1}/bill/{2}?minorversion=52'.format(
+        settings.QBO_BASE_URL, realm_id, bill_id)
     return route
 
 
@@ -95,8 +100,7 @@ def deleteBillInQB(bill_id):
 
 
 def readBillFromQB(bill_id):
-    access_token = get_access_token()
-    url = _get_url() + '/' + bill_id + '?minorversion=52'  # Worked with 52
+    url = _get_read_url(bill_id)
     headers = _get_headers(access_token)
     resp = requests.get(url=url, headers=headers)
     if resp.status_code == 200:

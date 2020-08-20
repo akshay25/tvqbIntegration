@@ -9,7 +9,7 @@ def getVendor(name):
     access_token = get_access_token()
     sql = "select * from Vendor where DisplayName='{0}' and Active=true".format(name)
     parsed_sql = urllib.parse.quote(sql)
-    url = '{0}/v3/company/{1}/query?query={2}&minorversion=51'.format(
+    url = '{0}/v3/company/{1}/query?query={2}&minorversion=52'.format(
         settings.QBO_BASE_URL, settings.QBO_COMPANY_ID, parsed_sql)
     headers = _get_headers(access_token)
     response = requests.get(
