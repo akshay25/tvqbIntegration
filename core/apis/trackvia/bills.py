@@ -86,7 +86,7 @@ def getReferencedFieldMappings():
 
 
 def updateTvBillStatus(bill_id, status):
-    url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?formId=5429&viewId=4118'\
+    url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?formId=6060&viewId=4205'\
         .format(bill_id)
     params = {
         'access_token': get_access_token(),
@@ -97,14 +97,14 @@ def updateTvBillStatus(bill_id, status):
         'data': [
             {
                 'fieldMetaId': 21740,
-                'id': 284093,
+                'id': 286073,
                 'type': 'dropDown',
                 'value': status
             }
         ]
     }
-    r = requests.put(url=url, params=params, json=body)
-    if r.status_code != 200:
+    resp = requests.put(url=url, params=params, json=body)
+    if resp.status_code != 200:
         print('payment status not updated')
 
 
