@@ -101,7 +101,7 @@ def deleteBillInQB(bill_id):
 
 def readBillFromQB(bill_id):
     url = _get_read_url(bill_id)
-    headers = _get_headers(access_token)
+    headers = _get_headers(get_access_token())
     resp = requests.get(url=url, headers=headers)
     if resp.status_code == 200:
         return resp.json()

@@ -14,7 +14,8 @@ def updateBIllInQB(bill_dict):
     else:
         bill_in_qb = createBillInQB(bill_expense)
         if bill_dict.get('BILL PDF') and bill_dict.get('BILL PDF LINK'):
-            s3_link = upload_file()
+            print('pushed to s3')
+            #s3_link = upload_file()
 
         bill_expense_ref = BillExpenseReference(
             tv_id=bill_dict.get('bill_id'),
@@ -30,7 +31,7 @@ def updateBIllInQB(bill_dict):
 
 
 def deleteBillFromQB(tv_bill_id):
-    bill = BillExpenseReference.getBillExpenseReferanceByTvId(bill_id=tv_bill_id)
+    bill = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=tv_bill_id)
     if not bill:
         print('deleteBillFromQB: No bill found.')
         return

@@ -1,5 +1,4 @@
 from celery import shared_task
-from celery.contrib import rdb
 
 import re
 import base64, hmac, hashlib, json
@@ -45,8 +44,6 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
             refresh()
             deleteInvoiceFromQB(record_id)
     elif bill_table_id == table_id and bill_view_id == view_id:
-        # from celery.contrib import rdb
-        # rdb.set_trace()
         if event_type == 'AFTER_CREATE':
             print('ignoring bill because AFTER_CREATE event is fired')
             return
@@ -213,7 +210,7 @@ def processBills(payment_ids):
         if not payment:
             print('payment not found for id ', payment_id)
             break
-        lines = payment['Payment']['Line']
+        lines = payment['BillPayment']['Line']
         for line in lines:
             for ltxn in line['LinkedTxn']:
                 if ltxn['TxnType'] == 'Bill':  # Confirm this type
@@ -236,12 +233,11 @@ def process_bill(bill_id):
     balance = bill.get('Bill').get('Balance')
     print(total_amt, balance, '************************')
 
-    bill_referance = BillExpenseReference.getBillExpenseReferanceByTvId(bill_id)
-
-    if not bill_referance:
+    bill_refs = BillExpenseReference.objects.filter(qb_id=bill_id)
+    if len(bill_refs) == 0:
         return
 
-    tv_id = bill_referance.tv_id
+    tv_id = bill_refs[0].tv_id
 
     if total_amt == balance:
         updateTvBillStatus(tv_id, 'UNPAID')
