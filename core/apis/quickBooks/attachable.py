@@ -9,7 +9,7 @@ from django.conf import settings
 file_root_path = '/tmp/'
 
 
-def downloadFileFromLink(link, file_name):
+def downloadFileFromLink(file_name, link):
     resp = requests.get(link)
     with open(file_root_path + file_name, 'wb') as f:
         f.write(resp.content)
