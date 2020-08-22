@@ -110,6 +110,36 @@ def deleteAttachable(bill_id):
             print('Error: delete attachable ', attachable_ref_id)
 
 
+def attachNoteToEntity(note_text, entity_id, entity_name):
+    request_body = {
+        "Note": note_text,
+        "AttachableRef": [
+            {
+                "IncludeOnSend": "false",
+                "EntityRef": {
+                    "type": entity_name,
+                    "value": entity_id
+                }
+            }
+        ]
+    }
+    url = _get_note_url()
+    access_token = get_access_token()
+    headers = _get_delete_headers(access_token)
+    response = requests.post(
+        url=url,
+        json=request_body,
+        headers=headers
+    )
+    print(response.json())
+
+
+def _get_note_url():
+    realm_id = settings.QBO_COMPANY_ID
+    route = '{0}/v3/company/{1}/attachable?minorversion=52'.format(settings.QBO_BASE_URL, realm_id)
+    return route
+
+
 def _get_upload_url():
     realm_id = settings.QBO_COMPANY_ID
     route = '{0}/v3/company/{1}/upload?minorversion=52'.format(settings.QBO_BASE_URL, realm_id)

@@ -1,6 +1,7 @@
 from core.apis.quickBooks.bill import updateBillInQB, createBillInQB, deleteBillInQB
 from core.billToExpenseMapper import billToExpense
 from core.models import BillExpenseReference
+from tvqbIntegration.utility.s3 import upload_file
 
 
 def updateBIllInQB(bill_dict):
@@ -12,6 +13,9 @@ def updateBIllInQB(bill_dict):
         print('updated bill in qb')
     else:
         bill_in_qb = createBillInQB(bill_expense)
+        if bill_dict.get('BILL PDF') and bill_dict.get('BILL PDF LINK'):
+            s3_link = upload_file()
+
         bill_expense_ref = BillExpenseReference(
             tv_id=bill_dict.get('bill_id'),
             qb_id= bill_in_qb.get('Bill').get('Id')
