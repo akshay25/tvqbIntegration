@@ -7,6 +7,7 @@ import traceback
 from datetime import date, timedelta
 
 from core.apis.quickBooks.bill import readBillFromQB
+from core.apis.quickBooks.billpayment import readBillPayment
 from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
 from core.apis.quickBooks.authentication import refresh
@@ -208,7 +209,7 @@ def process_invoice(invoice_id):
 def processBills(payment_ids):
     bill_ids = []
     for payment_id in payment_ids:
-        payment = readPayment(payment_id)
+        payment = readBillPayment(payment_id)
         if not payment:
             print('payment not found for id ', payment_id)
             break
