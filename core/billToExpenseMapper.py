@@ -19,7 +19,10 @@ def _billMapper(bill_dict):
         'VendorRef': _getVendorRef(bill_dict.get('MANUFACTURER')),
         'TotalAmt': bill_dict.get('BILL TOTAL'),
         'Line': _getLineItems(
-            bill_dict.get('SUBTOTAL'), bill_dict.get('FREIGHT')),
+            bill_dict.get('SUBTOTAL'),
+            bill_dict.get('FREIGHT'),
+            bill_dict.get('PO# FROM DOCPARSER'),
+            bill_dict.get('FREIGHT FROM DOCPARSER')),
         # 'status': _getPaymentStatus(bill_dict.get('PAYMENT STATUS')),
         'SyncToken': 1
         # 'BillPDF': bill_dict.get('BILL PDF LINK')
@@ -50,7 +53,7 @@ def _getPaymentStatus(key):
     return status_mapping_dict.get(key, 'Draft')  # Discus Logic
 
 
-def _getLineItems(subtotal, freight_charge):
+def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docparser):
     lineList = []
 
     item_1 = queryItem(item_1_name)
@@ -59,9 +62,7 @@ def _getLineItems(subtotal, freight_charge):
             {
                 # 'Id': '1',
                 # 'LineNum': '1',
-                'Description': "{0}/{1}".format(
-                    item_1.get('item').get('Type'),
-                    item_1.get('item').get('Description')),
+                'Description': po_from_docparser,
                 'Amount': subtotal if subtotal else '0',
                 'DetailType': 'ItemBasedExpenseLineDetail',  # Logic to be discussed
                 'ItemBasedExpenseLineDetail': {
@@ -83,9 +84,7 @@ def _getLineItems(subtotal, freight_charge):
             {
                 # 'Id': '1',
                 # 'LineNum': '2',
-                'Description': "{0}/{1}".format(
-                    item_2.get('item').get('Type'),
-                    item_2.get('item').get('Description')),
+                'Description': freight_from_docparser,
                 'Amount': freight_charge if freight_charge else '0',
                 'DetailType': 'ItemBasedExpenseLineDetail',  # Logic to be discussed
                 'ItemBasedExpenseLineDetail': {
