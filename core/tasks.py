@@ -233,18 +233,18 @@ def process_bill(bill_id):
     balance = bill.get('Bill').get('Balance')
     print(total_amt, balance, '************************')
 
-    # bill_refs = BillExpenseReference.objects.filter(qb_id=bill_id)
-    # if len(bill_refs) == 0:
-    #     return
-    #
-    # tv_id = bill_refs[0].tv_id
-
-    bill_ref = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=bill_id)
-    if not bill_ref:
-        print('billreferance not found for id ', bill_id)
+    bill_refs = BillExpenseReference.objects.filter(qb_id=bill_id)
+    if len(bill_refs) == 0:
         return
     
-    tv_id = bill_ref.tv_id
+    tv_id = bill_refs[0].tv_id
+
+    # bill_ref = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=bill_id)
+    # if not bill_ref:
+    #     print('billreferance not found for id ', bill_id)
+    #     return
+    
+    # tv_id = bill_ref.tv_id
 
     if total_amt == balance:
         updateTvBillStatus(tv_id, 'UNPAID')
