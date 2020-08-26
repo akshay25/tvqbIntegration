@@ -131,7 +131,6 @@ def attachNoteToEntity(note_text, entity_id, entity_name):
         json=request_body,
         headers=headers
     )
-    print(response.json())
 
 
 def _get_note_url():

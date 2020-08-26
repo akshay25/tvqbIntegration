@@ -24,9 +24,6 @@ def _billMapper(bill_dict):
             bill_dict['FREIGHT'],
             bill_dict['PO# FROM DOCPARSER'],
             bill_dict['FREIGHT FROM DOCPARSER'])
-        # 'status': _getPaymentStatus(bill_dict.get('PAYMENT STATUS')),
-        # 'SyncToken': 1
-        # 'BillPDF': bill_dict.get('BILL PDF LINK')
     }
 
 
@@ -39,19 +36,8 @@ def _getVendorRef(name):
                    'We got an error finding customer: {0} in Quickbooks while processing trackvia bill.'
                    ' Bill creation/updation failed. Please create customer in quickbooks and retry.'.format(
                        name))
-        # raise Exception()
+        raise Exception()
     return { 'value': vendorRef['Vendor']['Id'] }
-    # return {
-    #     'name': vendorRef.get('DisplayName', 'Robertson & Associates') if vendorRef else 'Robertson & Associates',
-    #     'value': vendorRef.get('Id', '49') if vendorRef else '49',
-    # }
-
-
-def _getPaymentStatus(key):
-    status_mapping_dict = {
-        'UNPAID': 'Pending'
-    }
-    return status_mapping_dict.get(key, 'Draft')  # Discus Logic
 
 
 def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docparser):

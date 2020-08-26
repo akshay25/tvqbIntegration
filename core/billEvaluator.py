@@ -15,7 +15,7 @@ def updateBIllInQB(bill_dict):
         print('updated bill in qb')
     else:
         bill_in_qb = createBillInQB(bill_expense)
-        if bill_dict.get('BILL PDF') and bill_dict.get('BILL PDF LINK'):
+        if bill_dict.get('BILL PDF LINK'):
             downloadAndForwardAttachable(bill_dict, bill_in_qb)
 
         bill_expense_ref = BillExpenseReference(
@@ -25,20 +25,22 @@ def updateBIllInQB(bill_dict):
         )
         try:
             bill_expense_ref.save()
-            print('created invoice in qb')
+            print('created bill in qb')
         except Exception as e:
             print('Exception in creating BillExpenseReference as ' + str(e))
     return
 
 
 def downloadAndForwardAttachable(bill_dict, bill_in_qb):
+    attachableName = bill_dict.get('BILL PDF') if len(bill_dict.get('BILL PDF')) else bill_in_qb.get('Bill').get('DocNumber') + ".pdf"
     downloadFileFromLink(
-        bill_dict.get('BILL PDF'),
+        attachableName,
         bill_dict.get('BILL PDF LINK')
     )
+    s3AttachableName = "bill_attachments/" + attachableName
     s3_link = upload_file(
-        bill_dict.get('BILL PDF'),
-        file_root_path + bill_dict.get('BILL PDF')
+        s3AttachableName,
+        file_root_path + attachableName
     )
     attachNoteToEntity(
         s3_link,
