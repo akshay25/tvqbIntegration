@@ -28,7 +28,7 @@ def create_presigned_url(bucket_name, object_name, expiration=3600):
 
 
 def upload_file(filename, filepath):
-	s3 = boto3.resource('s3')
+	s3 = boto3.resource('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 	s3.Object(settings.AWS_STORAGE_BUCKET_NAME, filename).upload_file(filepath)
 	object_acl = s3.ObjectAcl(settings.AWS_STORAGE_BUCKET_NAME, filename)
 	object_acl.put(ACL='public-read')
