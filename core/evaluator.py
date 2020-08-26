@@ -2,6 +2,7 @@ from core.fieldMapper import tvToqb
 from core.apis.quickBooks.invoice import deleteInvoice, updateInvoice, createInvoice
 from .models import InvoiceRef
 
+
 def updateInvoiceInQB(tv_invoice):
     qb_invoice = tvToqb(tv_invoice)
     invoices = InvoiceRef.objects.filter(tv_id=tv_invoice['invoice_data']['tv_id'])
@@ -15,6 +16,7 @@ def updateInvoiceInQB(tv_invoice):
         invoice_ref.save()
         print('created invoice in qb')
     return
+
 
 def deleteInvoiceFromQB(tv_invoice_id):
     invoices = InvoiceRef.objects.filter(tv_id=tv_invoice_id)
