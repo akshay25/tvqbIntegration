@@ -1,8 +1,9 @@
 import requests
 import urllib.parse
 
-from django.conf import settings
 from core.apis.quickBooks.authentication import get_access_token, refresh
+from core.logger import logger
+from django.conf import settings
 
 
 def getVendor(name):
@@ -23,9 +24,10 @@ def getVendor(name):
                 'Vendor': result.get('QueryResponse').get('Vendor')[0]
             }
         else:
+            logger.error("getVendor error for " + name)
             return {'error': 'NO Vendor FOUND'}
     else:
-        print('Error: Vendor ', name)
+        logger.error('Error: Vendor ', name)
 
 
 def _get_headers(access_token):

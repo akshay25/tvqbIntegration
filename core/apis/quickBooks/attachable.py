@@ -4,6 +4,8 @@ import requests
 import urllib.parse
 
 from core.apis.quickBooks.authentication import get_access_token
+from core.logger import logger
+
 from django.conf import settings
 
 file_root_path = '/tmp/'
@@ -37,7 +39,6 @@ def uploadAttachableInQB(bill_id, pdf_name):
         json=request_body,
         headers=headers
     )
-    print(resp.json())
 
 
 def getAttachableRefForBill(bill_id):
@@ -62,7 +63,7 @@ def getAttachableRefForBill(bill_id):
         else:
             return {'error': 'NO AttachableRef FOUND'}
     else:
-        print('Error: AttachableRef ', bill_id)
+        logger.error('Error: AttachableRef ', bill_id)
 
 
 def getAttachableDetailsById(attachable_id):
@@ -76,7 +77,7 @@ def getAttachableDetailsById(attachable_id):
         else:
             return {'error': 'NO Details for Attachable ' + attachable_id}
     else:
-        print('Error: attachable_id ', attachable_id)
+        logger.error('Error: attachable_id ', attachable_id)
 
 
 def deleteAttachable(bill_id):
@@ -85,7 +86,7 @@ def deleteAttachable(bill_id):
     headers = _get_delete_headers(access_token)
 
     if not attachable_refs:
-        print('Error: No attachable for bill ', bill_id)
+        logger.error('Error: No attachable for bill ', bill_id)
         return
 
     for attachable_ref in attachable_refs:
@@ -104,10 +105,10 @@ def deleteAttachable(bill_id):
         if resp.status_code == 200:
             result = resp.json()
             if result.get("Attachable") and result.get("Attachable").get('status') == 'Deleted':
-                print('Attachable deleted for bill {0} with Id {1}'.
+                logger.error('Attachable deleted for bill {0} with Id {1}'.
                       format(bill_id, attachable_ref_id))
         else:
-            print('Error: delete attachable ', attachable_ref_id)
+            logger.error('Error: delete attachable ', attachable_ref_id)
 
 
 def attachNoteToEntity(note_text, entity_id, entity_name):
@@ -131,6 +132,11 @@ def attachNoteToEntity(note_text, entity_id, entity_name):
         json=request_body,
         headers=headers
     )
+    if response.status_code == 200:
+        logger.info("attachNoteToEntity | note added | {0} | {1} | {2}".format(note_text, entity_id, entity_name))
+    else:
+        logger.error("attachNoteToEntity | note failed | {0} | {1} | {2}".format(note_text, entity_id, entity_name))
+        
 
 
 def _get_note_url():
