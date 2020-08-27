@@ -6,6 +6,8 @@ from core.models import BillExpenseReference
 from core.email import send_email
 from core.logger import logger
 
+import os
+
 from tvqbIntegration.utility.s3 import upload_file
 
 file_root_path = '/tmp/'
@@ -53,7 +55,12 @@ def downloadAndForwardAttachable(bill_dict, bill_in_qb):
         bill_in_qb.get('Bill').get('Id'),
         'Bill'
     )
+    deleteAttachemnt(attachableName)
     logger.info('downloadAndForwardAttachable | pushed to s3')
+
+
+def deleteAttachemnt(fileName):
+    os.remove(file_root_path + fileName)
 
 
 def deleteBillFromQB(tv_bill_id):
