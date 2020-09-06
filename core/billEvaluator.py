@@ -1,10 +1,17 @@
+
 from core.apis.quickBooks.attachable import downloadFileFromLink, attachNoteToEntity
 from core.apis.quickBooks.bill import updateBillInQB, createBillInQB, deleteBillInQB
 from core.billToExpenseMapper import billToExpense
 from core.models import BillExpenseReference
+from core.email import send_email
+from core.logger import logger
+
+import os
+
 from tvqbIntegration.utility.s3 import upload_file
 
 file_root_path = '/tmp/'
+
 
 def updateBIllInQB(bill_dict):
     bill_expense = billToExpense(bill_dict)
@@ -12,7 +19,7 @@ def updateBIllInQB(bill_dict):
     if bill_ref:
         bill_expense['Id'] = bill_ref.qb_id
         updateBillInQB(bill_expense)
-        print('updated bill in qb')
+        logger.info('updateBIllInQB | updated bill in qb {0}'.format(bill_dict))
     else:
         bill_in_qb = createBillInQB(bill_expense)
         if bill_dict.get('BILL PDF LINK'):
@@ -21,13 +28,13 @@ def updateBIllInQB(bill_dict):
         bill_expense_ref = BillExpenseReference(
             tv_id=bill_dict.get('bill_id'),
             qb_id=bill_in_qb.get('Bill').get('Id')
-            # bill_pdf=bill_dict.get('BILL PDF LINK')
         )
         try:
             bill_expense_ref.save()
-            print('created bill in qb')
+            logger.info('updateBIllInQB | created bill in qb {0}'.format(bill_dict))
         except Exception as e:
-            print('Exception in creating BillExpenseReference as ' + str(e))
+            logger.error("updateBIllInQB | Error in updateBIllInQB " + bill_dict)
+            logger.error(str(e))
     return
 
 
@@ -40,20 +47,26 @@ def downloadAndForwardAttachable(bill_dict, bill_in_qb):
     s3AttachableName = "bill_attachments/" + attachableName
     s3_link = upload_file(
         s3AttachableName,
-        file_root_path + attachableName
+        file_root_path + attachableName,
+        True
     )
     attachNoteToEntity(
         s3_link,
         bill_in_qb.get('Bill').get('Id'),
         'Bill'
     )
-    print('pushed to s3')
+    deleteAttachemnt(attachableName)
+    logger.info('downloadAndForwardAttachable | pushed to s3')
+
+
+def deleteAttachemnt(fileName):
+    os.remove(file_root_path + fileName)
 
 
 def deleteBillFromQB(tv_bill_id):
     bill = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=tv_bill_id)
     if not bill:
-        print('deleteBillFromQB: No bill found.')
+        logger.error("deleteBillFromQB: No bill found for " + tv_bill_id)
         return
 
     deleteBillInQB(bill.qb_id)
@@ -61,4 +74,4 @@ def deleteBillFromQB(tv_bill_id):
     bill.delete()
     bill.save()
 
-    print('deleted bill from qb: ', bill.qb_id)
+    logger.info('deleted bill from qb: ', bill.qb_id)

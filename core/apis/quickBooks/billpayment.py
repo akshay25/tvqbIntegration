@@ -1,6 +1,8 @@
 import requests
+
 from django.conf import settings
 from core.apis.quickBooks.authentication import get_access_token
+from core.logger import logger
 
 
 def readBillPayment(payment_id):
@@ -11,7 +13,7 @@ def readBillPayment(payment_id):
     if r.status_code == 200:
         return r.json()
     else:
-        print('log read BillPayment API failed', payment_id, r.json(), r.status_code)
+        logger.error('log read BillPayment API failed {0} | {1} | {2}'.format(payment_id, r.json(), r.status_code))
         return {'error': "Not found"}
 
 

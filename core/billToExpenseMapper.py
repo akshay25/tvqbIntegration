@@ -5,7 +5,7 @@ from core.logger import logger
 
 
 item_1_name = "Cost of Goods Sold:Purchases"
-item_2_name = "Freight Charge"
+freight_item_name = "Freight Charge"
 
 
 def billToExpense(bill_dict):
@@ -41,7 +41,7 @@ def _getVendorRef(name):
 
 
 def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docparser):
-    lineList = []
+    lineList = list()
 
     lineList.append(
         {
@@ -57,8 +57,8 @@ def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docp
         }
     )
 
-    item_2 = queryItem(item_2_name)
-    if item_2 and item_2.get('item'):
+    freight_item = queryItem(freight_item_name)
+    if freight_item and freight_item.get('item'):
         lineList.append(
             {
                 'Description': freight_from_docparser,
@@ -66,8 +66,8 @@ def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docp
                 'DetailType': 'ItemBasedExpenseLineDetail',
                 'ItemBasedExpenseLineDetail': {
                     'ItemRef': {
-                        'name': item_2.get('item').get('Name'),
-                        'value': item_2.get('item').get('Id')
+                        'name': freight_item.get('item').get('Name'),
+                        'value': freight_item.get('item').get('Id')
                     },
                     'TaxCodeRef': {'value': 'NON'}
                 }
