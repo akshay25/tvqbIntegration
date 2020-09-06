@@ -74,7 +74,6 @@ def updateBillInQB(data, is_sparse=False, retry_count=3):
 
 
 def deleteBillInQB(bill_id):
-    import pdb;pdb.set_trace()
     bill = readBillFromQB(bill_id)
     if not bill:
         print('log unable to fetch bill in deleteBillInQB ', bill_id)

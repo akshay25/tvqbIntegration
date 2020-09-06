@@ -19,7 +19,7 @@ def updateBIllInQB(bill_dict):
     if bill_ref:
         bill_expense['Id'] = bill_ref.qb_id
         updateBillInQB(bill_expense)
-        print('updated bill in qb')
+        logger.info('updateBIllInQB | updated bill in qb {0}'.format(bill_dict))
     else:
         bill_in_qb = createBillInQB(bill_expense)
         if bill_dict.get('BILL PDF LINK'):
@@ -31,9 +31,9 @@ def updateBIllInQB(bill_dict):
         )
         try:
             bill_expense_ref.save()
-            logger.info('created bill in qb')
+            logger.info('updateBIllInQB | created bill in qb {0}'.format(bill_dict))
         except Exception as e:
-            logger.error("Error in updateBIllInQB " + bill_dict)
+            logger.error("updateBIllInQB | Error in updateBIllInQB " + bill_dict)
             logger.error(str(e))
     return
 

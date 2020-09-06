@@ -31,12 +31,15 @@ bill_view_id = '4205'
 def process_tv_webhook(table_id, view_id, record_id, event_type):
     if invoice_table_id == table_id and invoice_view_id == view_id:
         if event_type == 'AFTER_CREATE':
-            print('ignoring invoice because AFTER_CREATE event is fired')
+            logger.error('ignoring invoice because AFTER_CREATE event is fired {0} | {1} | {2} | {3}'.format(
+                table_id, view_id, record_id, event_type))
             return
         elif event_type == 'AFTER_UPDATE':
             record = getFullInvoiceData(record_id)
             if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
-                print('ignoring as the record is not in SENT state or it is a test project.')
+                logger.error('ignoring as the record is not in SENT state or it is a test project'
+                             '. {0} | {1} | {2} | {3}'.format(
+                table_id, view_id, record_id, event_type))
                 return
             refresh()
             updateInvoiceInQB(record)
@@ -45,12 +48,15 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
             deleteInvoiceFromQB(record_id)
     elif bill_table_id == table_id and bill_view_id == view_id:
         if event_type == 'AFTER_CREATE':
-            print('ignoring bill because AFTER_CREATE event is fired')
+            logger.error('ignoring bill because AFTER_CREATE event is fired {0} | {1} | {2} | {3}'.format(
+                table_id, view_id, record_id, event_type))
             return
         elif event_type == 'AFTER_UPDATE':
             bill_dict = getBillDetailsById(record_id)
             if bill_dict['STATUS'] != 'APPROVED':
-                print('ignoring as the record is not in SENT state or it is a test project.')
+                logger.error('ignoring as the record is not in SENT state or it is a test project. '
+                             '{0} | {1} | {2} | {3}'.format(
+                table_id, view_id, record_id, event_type))
                 return
             refresh()
             updateBIllInQB(bill_dict)
@@ -62,7 +68,7 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
 
 @shared_task
 def process_qb_webhook(signature, body_unicode, verifier_token):
-    print('validating data.. ##################')
+    logger.info('validating data.. ##################')
     if verifyWebhookData(body_unicode, signature, verifier_token):
         try:
             refresh()
@@ -80,7 +86,7 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
             send_email('TV-QBO integeration error',
                        'We got an error updating payment status in trackvia: {0}.'.format(', '.join(payment_ids)))
     else:
-        print('webhook data temepered $$$$$$$---------')
+        logger.error('webhook data temepered | {0} | {1} | {2}'.format(signature, body_unicode, verifier_token))
         return
 
 
@@ -136,7 +142,7 @@ def verifyWebhookData(body_unicode, signature, verifier_token):
             hashlib.sha256
         ).hexdigest()
         decoded_hex_signature = base64.b64decode(signature).hex()
-        print(hmac_hex_digest == decoded_hex_signature, ' ^^^^^^^^^^^^^')
+        # print(hmac_hex_digest == decoded_hex_signature, ' ^^^^^^^^^^^^^')
         return hmac_hex_digest == decoded_hex_signature
     except Exception as e:
         return False
@@ -144,7 +150,7 @@ def verifyWebhookData(body_unicode, signature, verifier_token):
 
 def processWebhookData(body_unicode):
     data = json.loads(body_unicode)
-    print('processInvoiceWebhookData')
+    logger.info("processWebhookData | " + data)
     payment_ids = []
     bill_payment_ids = []
     entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
@@ -154,8 +160,8 @@ def processWebhookData(body_unicode):
         elif entity['name'] == 'BillPayment':
             bill_payment_ids.append(entity['id'])
 
-    print(payment_ids, "!!!!!!!!!!!")
-    print(bill_payment_ids, " &&&&&&&&&&&")
+    logger.info(payment_ids, "!!!!!!!!!!!")
+    logger.info(bill_payment_ids, " &&&&&&&&&&&")
 
     processInvoices(payment_ids)
 
@@ -169,7 +175,7 @@ def processInvoices(payment_ids):
     for payment_id in payment_ids:
         payment = readPayment(payment_id)
         if payment == None:
-            print('payment not found for id ', payment_id)
+            logger.error('payment not found for id ', payment_id)
             break
         lines = payment['Payment']['Line']
         for line in lines:
@@ -183,13 +189,13 @@ def processInvoices(payment_ids):
 
 def process_invoice(invoice_id):
     invoice = readInvoice(invoice_id)
-    print(invoice)
+    logger.info("process_invoice | {0} | {1]".format(invoice_id, invoice))
     if invoice == None:
-        print('invoice not found for id ', invoice_id)
+        logger.error('invoice not found for id ', invoice_id)
         return
     total_amt = invoice['Invoice']['TotalAmt']
     balance = invoice['Invoice']['Balance']
-    print(total_amt, balance, '************************')
+    logger.info("rocess_invoice | {0} | {1}".format(total_amt, balance))
     invoices = InvoiceRef.objects.filter(qb_id=invoice_id)
     if len(invoices) == 0:
         return
@@ -208,7 +214,7 @@ def processBills(payment_ids):
     for payment_id in payment_ids:
         payment = readBillPayment(payment_id)
         if not payment:
-            print('payment not found for id ', payment_id)
+            logger.error('processBills | payment not found for id | {0}'.format(payment_id))
             break
         lines = payment['BillPayment']['Line']
         for line in lines:
@@ -224,14 +230,14 @@ def process_bill(bill_id):
     bill = readBillFromQB(bill_id)
 
     if not bill:
-        print('bill not found for id ', bill_id)
+        logger.error('process_bill | bill not found for id | {0}'.format(bill_id))
         return
 
-    print(bill)
+    logger.error('process_bill | {0}'.format(bill))
 
     total_amt = bill.get('Bill').get('TotalAmt')
     balance = bill.get('Bill').get('Balance')
-    print(total_amt, balance, '************************')
+    logger.error("process_bill | log2 | {0} | {1}".format(total_amt, balance))
 
     bill_refs = BillExpenseReference.objects.filter(qb_id=bill_id)
     if len(bill_refs) == 0:
