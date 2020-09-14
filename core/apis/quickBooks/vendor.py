@@ -24,10 +24,10 @@ def getVendor(name):
                 'Vendor': result.get('QueryResponse').get('Vendor')[0]
             }
         else:
-            logger.error("getVendor error for " + name)
+            logger.error("getVendor error for {0}".format(name))
             return {'error': 'NO Vendor FOUND'}
     else:
-        logger.error('Error: Vendor ', name)
+        logger.error('Error: Vendor {0}'.format(name))
 
 
 def _get_headers(access_token):

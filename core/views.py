@@ -10,30 +10,40 @@ from django.views.decorators.csrf import csrf_exempt
 from core.tasks import process_qb_webhook, process_tv_webhook
 from core.apis.quickBooks.invoice import createInvoice, updateInvoice, readInvoice
 
+from core.logger import logger
+
 @csrf_exempt
 def qbwebhook(request):
 	if request.method == 'POST':
 		try:
-			body_unicode = request.body.decode('utf-8')
-			signature = request.headers.get('Intuit-Signature')
-			verifier_token = settings.QBO_WEBHOOK_VERIFIER
-			process_qb_webhook.delay(signature, body_unicode, verifier_token)
-			return HttpResponse("Hello, world. You're at the quickbooks webhook.")
+                    body_unicode = request.body.decode('utf-8')
+                    signature = request.headers.get('Intuit-Signature')
+                    verifier_token = settings.QBO_WEBHOOK_VERIFIER
+                    logger.info("QB webhook received: {0}, {1}".format(body_unicode, signature))
+                    process_qb_webhook.delay(signature, body_unicode, verifier_token)
+                    return HttpResponse("Hello, world. You're at the quickbooks webhook.")
 		except Exception as e:
-			print('qbwebhook error') # TODO:get stacktrace log
-			return HttpResponseBadRequest(e)
+                    print('qbwebhook error') # TODO:get stacktrace log
+                    return HttpResponseBadRequest(e)
 
 
 @csrf_exempt
 def tvwebhook(request):
 	if request.method == 'GET':
 		try:
-			table_id = request.GET.get('tableId')
-			view_id = request.GET.get('viewId')
-			record_id = request.GET.get('recordId')
-			event_type = request.GET.get('eventType')
-			process_tv_webhook.delay(table_id, view_id, record_id, event_type)
-			return HttpResponse("Hello, world. You're at the trackvia integrations.")
+                    table_id = request.GET.get('tableId')
+                    view_id = request.GET.get('viewId')
+                    record_id = request.GET.get('recordId')
+                    event_type = request.GET.get('eventType')
+                    logger.info("TV webhook received: {0}, {1}, {2}, {3}".format(table_id, view_id, record_id, event_type))
+                    process_tv_webhook.delay(table_id, view_id, record_id, event_type)
+                    return HttpResponse("Hello, world. You're at the trackvia integrations.")
 		except Exception as e:
-			print('tvwebhook error') # TODO:get stacktrace
-			return HttpResponseBadRequest(e)
+                    print('tvwebhook error') # TODO:get stacktrace
+                    return HttpResponseBadRequest(e)
+
+@csrf_exempt
+def status(request):
+    if request.method == 'GET':
+        logger.info("Working fine..!!")
+        return HttpResponse('Working fine..!!')

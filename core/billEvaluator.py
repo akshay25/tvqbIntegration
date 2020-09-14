@@ -1,4 +1,3 @@
-
 from core.apis.quickBooks.attachable import downloadFileFromLink, attachNoteToEntity
 from core.apis.quickBooks.bill import updateBillInQB, createBillInQB, deleteBillInQB
 from core.billToExpenseMapper import billToExpense
@@ -33,7 +32,7 @@ def updateBIllInQB(bill_dict):
             bill_expense_ref.save()
             logger.info('updateBIllInQB | created bill in qb {0}'.format(bill_dict))
         except Exception as e:
-            logger.error("updateBIllInQB | Error in updateBIllInQB " + bill_dict)
+            logger.error("updateBIllInQB | Error in updateBIllInQB {0}".format(bill_dict))
             logger.error(str(e))
     return
 
@@ -56,7 +55,7 @@ def downloadAndForwardAttachable(bill_dict, bill_in_qb):
         'Bill'
     )
     deleteAttachemnt(attachableName)
-    logger.info('downloadAndForwardAttachable | pushed to s3')
+    logger.info('downloadAndForwardAttachable | pushed to s3 | bill: {0}'.format(bill_dict))
 
 
 def deleteAttachemnt(fileName):
@@ -66,7 +65,7 @@ def deleteAttachemnt(fileName):
 def deleteBillFromQB(tv_bill_id):
     bill = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=tv_bill_id)
     if not bill:
-        logger.error("deleteBillFromQB: No bill found for " + tv_bill_id)
+        logger.error("deleteBillFromQB: No bill found for {0}".format(tv_bill_id))
         return
 
     deleteBillInQB(bill.qb_id)
@@ -74,4 +73,4 @@ def deleteBillFromQB(tv_bill_id):
     bill.delete()
     bill.save()
 
-    logger.info('deleted bill from qb: ', bill.qb_id)
+    logger.info('deleted bill from qb: {0}'.format(bill.qb_id))

@@ -37,9 +37,8 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
         elif event_type == 'AFTER_UPDATE':
             record = getFullInvoiceData(record_id)
             if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
-                logger.error('ignoring as the record is not in SENT state or it is a test project'
-                             '. {0} | {1} | {2} | {3}'.format(
-                table_id, view_id, record_id, event_type))
+                logger.error('ignoring as the record is not in SENT state or it is a test project. {0} | {1} | {2} | {3}'.format(
+                    table_id, view_id, record_id, event_type))
                 return
             refresh()
             updateInvoiceInQB(record)
@@ -54,8 +53,7 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
         elif event_type == 'AFTER_UPDATE':
             bill_dict = getBillDetailsById(record_id)
             if bill_dict['STATUS'] != 'APPROVED':
-                logger.error('ignoring as the record is not in APPROVED state or it is a test project. '
-                             '{0} | {1} | {2} | {3}'.format(
+                logger.error('ignoring as the record is not in APPROVED state or it is a test project. {0} | {1} | {2} | {3}'.format(
                 table_id, view_id, record_id, event_type))
                 return
             refresh()
@@ -119,7 +117,7 @@ def verifyWebhookData(body_unicode, signature, verifier_token):
 
 def processWebhookData(body_unicode):
     data = json.loads(body_unicode)
-    logger.info("processWebhookData | " + body_unicode)
+    logger.info("processWebhookData | {0}".format(body_unicode))
     payment_ids = []
     bill_payment_ids = []
     entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
@@ -129,8 +127,7 @@ def processWebhookData(body_unicode):
         elif entity['name'] == 'BillPayment':
             bill_payment_ids.append(entity['id'])
 
-    logger.info(payment_ids, "!!!!!!!!!!!")
-    logger.info(bill_payment_ids, " &&&&&&&&&&&")
+    logger.info("payment_ids: {0}, bill_payment_ids: {1}".format(payment_ids, bill_payment_ids))
 
     processInvoices(payment_ids)
 
@@ -144,7 +141,7 @@ def processInvoices(payment_ids):
     for payment_id in payment_ids:
         payment = readPayment(payment_id)
         if payment == None:
-            logger.error('payment not found for id ', payment_id)
+            logger.error('payment not found for id {0}'.format(payment_id))
             break
         lines = payment['Payment']['Line']
         for line in lines:
@@ -158,13 +155,13 @@ def processInvoices(payment_ids):
 
 def process_invoice(invoice_id):
     invoice = readInvoice(invoice_id)
-    logger.info("process_invoice | {0} | {1]".format(invoice_id, invoice))
+    logger.info("process_invoice | {0} | {1}".format(invoice_id, invoice))
     if invoice == None:
-        logger.error('invoice not found for id ', invoice_id)
+        logger.error('invoice not found for id {0}'.format(invoice_id))
         return
     total_amt = invoice['Invoice']['TotalAmt']
     balance = invoice['Invoice']['Balance']
-    logger.info("rocess_invoice | {0} | {1}".format(total_amt, balance))
+    logger.info("process_invoice | {0} | {1}".format(total_amt, balance))
     invoices = InvoiceRef.objects.filter(qb_id=invoice_id)
     if len(invoices) == 0:
         return
