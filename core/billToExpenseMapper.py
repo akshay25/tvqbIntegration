@@ -19,6 +19,7 @@ def _billMapper(bill_dict):
         'DueDate': bill_dict['DUE DATE'],
         'VendorRef': _getVendorRef(bill_dict['MANUFACTURER']),
         'TotalAmt': bill_dict.get('BILL TOTAL'),
+        'PrivateNote': bill_dict.get('BILL PDF LINK'),
         'Line': _getLineItems(
             bill_dict['SUBTOTAL'],
             bill_dict['FREIGHT'],
