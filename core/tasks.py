@@ -164,6 +164,7 @@ def process_invoice(invoice_id):
     logger.info("process_invoice | {0} | {1}".format(total_amt, balance))
     invoices = InvoiceRef.objects.filter(qb_id=invoice_id)
     if len(invoices) == 0:
+        logger.error('process_invoice | invoices not found for id | {0}'.format(invoice_id))
         return
     tv_invoice_id = invoices[0].tv_id
     if total_amt == balance:
@@ -207,6 +208,7 @@ def process_bill(bill_id):
 
     bill_refs = BillExpenseReference.objects.filter(qb_id=bill_id)
     if len(bill_refs) == 0:
+        logger.error('process_bill | bill_ref not found for id | {0}'.format(bill_id))
         return
 
     tv_id = bill_refs[0].tv_id

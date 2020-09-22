@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
 from core.apis.quickBooks.authentication import get_access_token, refresh
+from core.logger import logger
 
 
 def createBillInQB(data):
@@ -44,7 +45,8 @@ def updateBillInQB(data, is_sparse=False, retry_count=3):
         if retry_count >= 0:
             updateBillInQB(data, is_sparse, retry_count-1)
         else:
-            print('updateBillInQB unable to fetch bill')
+            # print('updateBillInQB unable to fetch bill')
+            logger.error("updateBillInQB unable to fetch bill for {0}".format(bill_id))
             return
 
     access_token = get_access_token()
@@ -64,19 +66,26 @@ def updateBillInQB(data, is_sparse=False, retry_count=3):
     elif resp.status_code == 501:
         print(resp.content)
         if retry_count > 0:
-            print('updateBillInQB failed update bill due to sync token', data, retry_count)
+            logger.error("updateBillInQB failed update bill due to sync token | {0} | {1}".format(
+                data, retry_count))
+            # print('updateBillInQB failed update bill due to sync token', data, retry_count)
             return updateBillInQB(data, is_sparse, retry_count-1)
         else:
-            print('updateBillInQB failed update bill due to sync token', data, retry_count)
+            logger.error("updateBillInQB failed update bill due to sync token | {0} | {1}".format(
+                data, retry_count))
+            # print('updateBillInQB failed update bill due to sync token', data, retry_count)
     else:
-        print('updateBillInQB failed update bill', data, resp.json(), resp.status_code)
+        logger.error("updateBillInQB failed update bill | {0} | {1} | {2}".format(
+            data, resp.json(), resp.status_code))
+        # print('updateBillInQB failed update bill', data, resp.json(), resp.status_code)
         pass
 
 
 def deleteBillInQB(bill_id):
     bill = readBillFromQB(bill_id)
     if not bill:
-        print('log unable to fetch bill in deleteBillInQB ', bill_id)
+        logger.error("log unable to fetch bill in deleteBillInQB for {0}".format(bill_id))
+        # print('log unable to fetch bill in deleteBillInQB ', bill_id)
         return
     access_token = get_access_token()
     url = _get_url() + '/' + bill_id + '?operation=delete'
@@ -94,7 +103,9 @@ def deleteBillInQB(bill_id):
         # confirm logic
         return
     else:
-        print('log delete bill API failed', bill_id, resp.json(), resp.status_code)
+        logger.error("log delete bill API failed | {0} | {1} | {2}".format(
+            bill_id, resp.json(), resp.status_code))
+        # print('log delete bill API failed', bill_id, resp.json(), resp.status_code)
         # confirm logic
         return {'error': "Not found"}
 
@@ -106,5 +117,6 @@ def readBillFromQB(bill_id):
     if resp.status_code == 200:
         return resp.json()
     else:
-        print('log read bills API failed in readBillInQB()', bill_id)
+        logger.warn("log read bills API failed in readBillInQB() {0}".format(bill_id))
+        # print('log read bills API failed in readBillInQB()', bill_id)
         return None

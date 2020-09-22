@@ -21,8 +21,8 @@ def updateBIllInQB(bill_dict):
         logger.info('updateBIllInQB | updated bill in qb {0}'.format(bill_dict))
     else:
         bill_in_qb = createBillInQB(bill_expense)
-        if bill_dict.get('BILL PDF LINK'):
-            downloadAndForwardAttachable(bill_dict, bill_in_qb)
+        # if bill_dict.get('BILL PDF LINK'):
+            # downloadAndForwardAttachable(bill_dict, bill_in_qb)
 
         bill_expense_ref = BillExpenseReference(
             tv_id=bill_dict.get('bill_id'),
