@@ -117,6 +117,6 @@ def readBillFromQB(bill_id):
     if resp.status_code == 200:
         return resp.json()
     else:
-        logger.warn("log read bills API failed in readBillInQB()".format(bill_id))
+        logger.warn("log read bills API failed in readBillInQB() {0}".format(bill_id))
         # print('log read bills API failed in readBillInQB()', bill_id)
         return None
