@@ -74,15 +74,18 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
         except Exception as e:
             data = json.loads(body_unicode)
             payment_ids = []
+            bill_payment_ids = []
             entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
             for entity in entities:
                 if entity['name'] == 'Payment':
                     payment_ids.append(entity['id'])
-            logger.error(
-                'error updating payment status in trackvia: {0} and got error {1}'.format(', '.join(payment_ids),
-                                                                                          traceback.format_exc()))
-            send_email('TV-QBO integeration error',
-                       'We got an error updating payment status in trackvia: {0}.'.format(', '.join(payment_ids)))
+                if entity['name'] == 'BillPayment':
+                    bill_payment_ids.append(entity['id'])
+            logger.error('error updating payment status in trackvia: invoice_payment_ids:{0} or bill_payment_ids:{1} and got error {2}'.format(
+                payment_ids, bill_payment_ids, traceback.format_exc()))
+            send_email('TV-QBO integeration error'
+                       'We got an error updating payment status in trackvia: invoice_payment_ids:{0} or bill_payment_ids:{1}.'.format(
+                           payment_ids, bill_payment_ids))
     else:
         logger.error('webhook data temepered | {0} | {1} | {2}'.format(signature, body_unicode, verifier_token))
         return

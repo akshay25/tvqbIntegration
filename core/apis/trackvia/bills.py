@@ -1,6 +1,7 @@
 from django.conf import settings
 import requests
 
+from core.logger import logger
 from core.apis.trackvia.authentication import get_access_token
 
 request_base_url = "https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?viewId=4205&formId=6060"
@@ -105,7 +106,7 @@ def updateTvBillStatus(bill_id, status):
     }
     resp = requests.put(url=url, params=params, json=body)
     if resp.status_code != 200:
-        print('payment status not updated')
+        logger.error('payment status not updated for bill, {0} | {1} | {2}'.format(bill_id, resp.json(), resp.status_code))
 
 
 def downloadAndSavePdf(pdf_link, pdf_name):

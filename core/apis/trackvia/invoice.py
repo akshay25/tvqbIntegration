@@ -1,6 +1,7 @@
 from django.conf import settings
 import requests
 
+from core.logger import logger
 from core.apis.trackvia.authentication import get_access_token
 
 def updateTvInvoiceStatus(invoice_id, status):
@@ -15,17 +16,14 @@ def updateTvInvoiceStatus(invoice_id, status):
                 {'fieldMetaId': 21443, 'id': 279131, 'type': 'dropDown', 'value': status}
                 ]
             }
-    r = requests.put(url = url, params = params, json = body)
-    if r.status_code != 200:
-        print('payment status not updated')
+    resp = requests.put(url = url, params = params, json = body)
+    if resp.status_code != 200:
+        logger.error('payment status not updated for invoice {0} | {1} | {2}'.format(invoice_id, resp.json(), resp.status_code))
 
 def getFullInvoiceData(invoice_id):
     invoice_data = getInvoiceData(invoice_id)
     invoice_item_data = getInvoiceItems(invoice_id)
 
-    print('tv invoice:', invoice_data)
-    print('^^^^^^^^^^')
-    print('tv items', invoice_item_data)
     return {
             'invoice_data': invoice_data,
             'invoice_items': invoice_item_data
