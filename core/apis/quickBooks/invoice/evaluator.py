@@ -1,6 +1,6 @@
-from core.fieldMapper import tvToqb
-from core.apis.quickBooks.invoice import deleteInvoice, updateInvoice, createInvoice
-from .models import InvoiceRef
+from core.apis.quickBooks.invoice.fieldMapper import tvToqb
+from core.apis.quickBooks.invoice.invoice import deleteInvoice, updateInvoice, createInvoice
+from core.models import InvoiceRef
 
 
 def updateInvoiceInQB(tv_invoice):

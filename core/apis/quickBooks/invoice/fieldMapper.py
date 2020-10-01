@@ -1,6 +1,5 @@
 from core.apis.quickBooks.item import queryItem, createItem
 from core.apis.quickBooks.customer import queryCustomer
-from core.apis.quickBooks.invoice import createInvoice
 from core.apis.quickBooks.taxcode import queryTaxCode
 from core.email import send_email
 from core.logger import logger

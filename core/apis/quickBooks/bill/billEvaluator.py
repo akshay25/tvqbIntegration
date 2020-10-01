@@ -1,8 +1,7 @@
 from core.apis.quickBooks.attachable import downloadFileFromLink, attachNoteToEntity
-from core.apis.quickBooks.bill import updateBillInQB, createBillInQB, deleteBillInQB
-from core.billToExpenseMapper import billToExpense
+from core.apis.quickBooks.bill.bill import updateBillInQB, createBillInQB, deleteBillInQB
+from core.apis.quickBooks.bill.billToExpenseMapper import billToExpense
 from core.models import BillExpenseReference
-from core.email import send_email
 from core.logger import logger
 
 import os
