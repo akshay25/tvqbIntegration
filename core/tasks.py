@@ -11,12 +11,14 @@ from core.apis.quickBooks.invoice import readInvoice
 from core.apis.quickBooks.payment import readPayment
 from core.apis.quickBooks.authentication import refresh
 from core.apis.trackvia.bills import getBillDetailsById, updateTvBillStatus
+from core.apis.trackvia.designfee import getDesignFeeDetailsById, updateDesignFeeStatus
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
+from core.designFeeEvaluator import updateDesignFeeInQB
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.billEvaluator import updateBIllInQB
 from core.email import send_email
 from core.logger import logger
-from core.models import InvoiceRef, BillExpenseReference
+from core.models import InvoiceRef, BillExpenseReference, DesignFeeRef
 from tvqbIntegration.utility.s3 import upload_file
 
 from django.conf import settings
@@ -25,6 +27,8 @@ invoice_table_id = '740'
 invoice_view_id = '4027'
 bill_table_id = '786'
 bill_view_id = '4205'
+designfee_table_id = '743'
+designfee_view_id = '4047'
 
 
 @shared_task
@@ -53,13 +57,29 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
         elif event_type == 'AFTER_UPDATE':
             bill_dict = getBillDetailsById(record_id)
             if bill_dict['STATUS'] != 'APPROVED':
-                logger.error('ignoring as the record is not in APPROVED state or it is a test project. {0} | {1} | {2} | {3}'.format(
+                logger.error('ignoring as the record is not in APPROVED state. {0} | {1} | {2} | {3}'.format(
                 table_id, view_id, record_id, event_type))
                 return
             refresh()
             updateBIllInQB(bill_dict)
         elif event_type == 'AFTER_DELETE':
             refresh()
+    elif designfee_table_id == table_id:
+        if event_type == 'AFTER_CREATE':
+            logger.error('ignoring designfee because AFTER_CREATE event is fired {0} | {1} | {2} | {3}'.format(
+                table_id, view_id, record_id, event_type))
+            return
+        elif event_type == 'AFTER_UPDATE':
+            designfee_dict = getDesignFeeDetailsById(record_id)
+            if designfee_dict.get('STATUS') != 'SEND INVOICE':  # Discuss the status
+                logger.error('ignoring as the record is not in SEND INVOICE state. {0} | {1} | {2} | {3}'.format(
+                    table_id, view_id, record_id, event_type))
+                return
+            refresh()
+            updateDesignFeeInQB(designfee_dict)
+        elif event_type == 'AFTER_DELETE':
+            refresh()
+            deleteInvoiceFromQB(record_id)
     else:
         pass
 
@@ -153,7 +173,15 @@ def processInvoices(payment_ids):
                     invoice_ids.append(ltxn['TxnId'])
     invoice_ids = list(set(invoice_ids))
     for invoice_id in invoice_ids:
-        process_invoice(invoice_id)
+        if checkIfDesignFee(invoice_id):
+            process_DesignFee(invoice_id)
+        else:
+            process_invoice(invoice_id)
+
+
+def checkIfDesignFee(invoice_id):
+    designFeeRef = DesignFeeRef().getDesignFeeRefByTvId(invoice_id)
+    return designFeeRef
 
 
 def process_invoice(invoice_id):
@@ -176,6 +204,36 @@ def process_invoice(invoice_id):
         updateTvInvoiceStatus(tv_invoice_id, 'FULL')
     elif balance < total_amt and balance > 0:
         updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL')
+    return
+
+
+def process_DesignFee(design_fee_qb_id):
+    design_fee_qb_obj = readInvoice(design_fee_qb_id)
+    logger.info("process_DesignFee | {0} | {1}".format(design_fee_qb_id, invoice))
+
+    if design_fee_qb_obj == None:
+        logger.error('design_fee_qb_obj not found for id {0}'.format(design_fee_qb_id))
+        return
+
+    total_amt = design_fee_qb_obj['Invoice']['TotalAmt']
+    balance = design_fee_qb_obj['Invoice']['Balance']
+    logger.info("process_DesignFee | {0} | {1}".format(total_amt, balance))
+
+    design_fee_ref = DesignFeeRef().getDesignFeeRefByQbId(design_fee_qb_id)
+
+    if not design_fee_ref:
+        logger.error('process_DesignFee | DesignFee not found for id | {0}'.format(design_fee_qb_id))
+        return
+
+    design_fee_tv_id = design_fee_ref.tv_id
+
+    if total_amt == balance:
+        updateDesignFeeStatus(design_fee_tv_id, 'UNPAID')
+    elif balance == 0:
+        updateDesignFeeStatus(design_fee_tv_id, 'FULL')
+    elif 0 < balance < total_amt:
+        updateDesignFeeStatus(design_fee_tv_id, 'PARTIAL')
+
     return
 
 
