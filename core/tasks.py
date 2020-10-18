@@ -71,8 +71,8 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
             return
         elif event_type == 'AFTER_UPDATE':
             designfee_dict = getDesignFeeDetailsById(record_id)
-            if designfee_dict.get('STATUS') != 'SEND INVOICE':  # Discuss the status
-                logger.error('ignoring as the record is not in SEND INVOICE state. {0} | {1} | {2} | {3}'.format(
+            if designfee_dict.get('STATUS') != 'SENT':  # Discuss the status
+                logger.error('ignoring as the record is not in SENT state. {0} | {1} | {2} | {3}'.format(
                     table_id, view_id, record_id, event_type))
                 return
             refresh()

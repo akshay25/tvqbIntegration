@@ -22,7 +22,7 @@ def getDesignFeeDetailsById(df_id):
         params=params)
 
     if response.status_code != 200:
-        # log
+        logger.error("getDesignFeeDetailsById | {0} | response status is {1}".format(df_id, response.status_code))
         pass
 
     response_data_dict = response.json()['data']
@@ -81,8 +81,8 @@ def updateDesignFeeStatus(df_id, status):
         'id': df_id,
         'data': [
             {
-                'fieldMetaId': 'XXXX',  # Will update when field is added
-                'id': 'YYYY',  # Will update when field is added
+                'fieldMetaId': '24694',
+                'id': '304680',
                 'type': 'dropDown',
                 'value': status
             }

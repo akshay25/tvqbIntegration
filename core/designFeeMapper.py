@@ -24,7 +24,6 @@ def getDesignFeeMapping(designFeeDict):
     return {
         'DocNumber': designFeeDict.get('DESIGN INVOICE #'),
         'DueDate':designFeeDict.get('SUBMISSION DATE'),  # check is due date and submission date are same
-        'CustomerMemo': {'value': designFeeDict.get('PHASE') + " " + designFeeDict.get('DESCRIPTION')},
         'TxnDate': designFeeDict.get('SUBMISSION DATE'),  # check is due date and submission date are same
         'TotalAmt': designFeeDict.get('TOTAL $')
     }
