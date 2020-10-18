@@ -13,7 +13,7 @@ def mapDesignFeeToQBAndReturn(tvDesignFeeDict):
         tvDesignFeeDict.get('DESIGN INVOICE #'))
     qbMappedData['Line'] = _getLine(
         tvDesignFeeDict.get('PHASE'),
-        tvDesignFeeDict.get('PHASE') + ' ' + tvDesignFeeDict.get('DESCRIPTION'),
+        tvDesignFeeDict.get('PHASE') + ' - ' + tvDesignFeeDict.get('DESCRIPTION'),
         tvDesignFeeDict.get('TOTAL $'),  # Check the amount of items
         tvDesignFeeDict.get('DESIGN INVOICE #')
     )
@@ -31,7 +31,6 @@ def getDesignFeeMapping(designFeeDict):
 
 def _customer_ref(cust_name, df_id):
     result = queryCustomer(cust_name)
-    # result = queryCustomer('Diego Rodriguez')  # Dummy Customer
     if 'Customer' in result:
         return {
             'value': result['Customer']['Id']
@@ -63,7 +62,7 @@ def _getLine(phase, description, amount, df_id):
             'Qty': 1,
             'UnitPrice': amount,
             'ItemRef': itemRef,
-            'TaxCodeRef': {'value': 'TAX'}
+            'TaxCodeRef': {'value': 'NON'}
         }
     }
     line_items.append(line_item)

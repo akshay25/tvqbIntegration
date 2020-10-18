@@ -7,7 +7,7 @@ from core.logger import logger
 
 def updateDesignFeeInQB(design_fee_dict):
     designFeeDict = mapDesignFeeToQBAndReturn(design_fee_dict)
-    designFeeRef = DesignFeeRef().getDesignFeeRefByTvId(designFeeDict.get('DocNumber'))
+    designFeeRef = DesignFeeRef().getDesignFeeRefByTvId(design_fee_dict.get('df_id'))
 
     if designFeeRef:
         designFeeDict['Id'] = designFeeRef.qb_id

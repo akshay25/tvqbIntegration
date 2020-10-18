@@ -103,7 +103,7 @@ def process_qb_webhook(signature, body_unicode, verifier_token):
                     bill_payment_ids.append(entity['id'])
             logger.error('error updating payment status in trackvia: invoice_payment_ids:{0} or bill_payment_ids:{1} and got error {2}'.format(
                 payment_ids, bill_payment_ids, traceback.format_exc()))
-            send_email('TV-QBO integeration error'
+            send_email('TV-QBO integeration error',
                        'We got an error updating payment status in trackvia: invoice_payment_ids:{0} or bill_payment_ids:{1}.'.format(
                            payment_ids, bill_payment_ids))
     else:
@@ -173,14 +173,14 @@ def processInvoices(payment_ids):
                     invoice_ids.append(ltxn['TxnId'])
     invoice_ids = list(set(invoice_ids))
     for invoice_id in invoice_ids:
-        if checkIfDesignFee(invoice_id):
+        if checkIfDesignFee(invoice_id) != None:
             process_DesignFee(invoice_id)
         else:
             process_invoice(invoice_id)
 
 
 def checkIfDesignFee(invoice_id):
-    designFeeRef = DesignFeeRef().getDesignFeeRefByTvId(invoice_id)
+    designFeeRef = DesignFeeRef().getDesignFeeRefByQbId(invoice_id)
     return designFeeRef
 
 
@@ -209,7 +209,7 @@ def process_invoice(invoice_id):
 
 def process_DesignFee(design_fee_qb_id):
     design_fee_qb_obj = readInvoice(design_fee_qb_id)
-    logger.info("process_DesignFee | {0} | {1}".format(design_fee_qb_id, invoice))
+    logger.info("process_DesignFee | {0}".format(design_fee_qb_id))
 
     if design_fee_qb_obj == None:
         logger.error('design_fee_qb_obj not found for id {0}'.format(design_fee_qb_id))

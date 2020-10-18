@@ -58,7 +58,6 @@ def getFieldMappings():
         (23358, 'DESIGN INVOICE #'),
         (18759, 'DESCRIPTION'),
         (22001, 'SUBMISSION DATE'),
-        (18315, 'DESIGNER TO INVOICE'),
         (23355, 'SEND TO'),
     ))
 
@@ -67,6 +66,7 @@ def getReferencedFieldMappings():
     return dict((
         (18770, 'PROJECT'),
         (18771, 'PHASE'),
+        (18315, 'DESIGNER TO INVOICE')
     ))
 
 
