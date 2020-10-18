@@ -32,6 +32,7 @@ def getDesignFeeMapping(designFeeDict):
 
 def _customer_ref(cust_name, df_id):
     result = queryCustomer(cust_name)
+    # result = queryCustomer('Diego Rodriguez')  # Dummy Customer
     if 'Customer' in result:
         return {
             'value': result['Customer']['Id']
@@ -68,7 +69,7 @@ def _getLine(phase, description, amount, df_id):
     }
     line_items.append(line_item)
 
-    return line_item
+    return line_items
 
 
 def _get_item_ref(item_name, df_id):

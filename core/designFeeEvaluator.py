@@ -17,7 +17,7 @@ def updateDesignFeeInQB(design_fee_dict):
         designFeeInQB = createInvoice(designFeeDict)
         designFeeRefObj = DesignFeeRef(
             tv_id=design_fee_dict.get('df_id'),
-            qb_id=designFeeInQB.get('DesignFee').get('Id')
+            qb_id=designFeeInQB.get('Invoice').get('Id')
         )
         try:
             designFeeRefObj.save()
