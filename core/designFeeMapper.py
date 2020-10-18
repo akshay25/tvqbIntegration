@@ -23,8 +23,8 @@ def mapDesignFeeToQBAndReturn(tvDesignFeeDict):
 def getDesignFeeMapping(designFeeDict):
     return {
         'DocNumber': designFeeDict.get('DESIGN INVOICE #'),
-        'DueDate':designFeeDict.get('SUBMISSION DATE'),  # check is due date and submission date are same
-        'TxnDate': designFeeDict.get('SUBMISSION DATE'),  # check is due date and submission date are same
+        'DueDate':designFeeDict.get('DUE DATE'),  # check is due date and submission date are same
+        'TxnDate': designFeeDict.get('SENT DATE'),  # check is due date and submission date are same
         'TotalAmt': designFeeDict.get('TOTAL $')
     }
 

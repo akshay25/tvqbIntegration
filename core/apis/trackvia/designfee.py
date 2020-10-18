@@ -57,7 +57,8 @@ def getFieldMappings():
         (18760, 'TOTAL $'),  # MANUAL AMOUNT
         (23358, 'DESIGN INVOICE #'),
         (18759, 'DESCRIPTION'),
-        (22001, 'SUBMISSION DATE'),
+        (19235, 'SENT DATE'),
+        (19234, 'DUE DATE'),
         (23355, 'SEND TO'),
     ))
 
