@@ -7,11 +7,13 @@ from core.logger import logger
 from core.apis.trackvia.authentication import get_access_token
 
 
-request_base_url = "https://go.trackvia.com/accounts/21782/apps/49/tables/743/records/{0}?viewId=4047&formId=6544"
+request_base_url = "https://go.trackvia.com/accounts/21782/apps/49/tables/743/records/{0}?viewId={1}&formId=6544"
 
 
-def getDesignFeeDetailsById(df_id):
-    request_url = request_base_url.format(df_id)
+def getDesignFeeDetailsById(df_id, view_id):
+    if not view_id:
+        view_id = '4047'
+    request_url = request_base_url.format(df_id, view_id)
     params = {
         'access_token': get_access_token(),
         'user_key': settings.TRACKVIA_USER_KEY
@@ -71,9 +73,11 @@ def getReferencedFieldMappings():
     ))
 
 
-def updateDesignFeeStatus(df_id, status):
-    url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/743/records/{0}?formId=6544&viewId=4047'\
-        .format(df_id)
+def updateDesignFeeStatus(df_id, status, view_id):
+    if not view_id:
+        view_id = '4047'
+    url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/743/records/{0}?formId=6544&viewId={1}'\
+        .format(df_id, view_id)
     params = {
         'access_token': get_access_token(),
         'user_key': settings.TRACKVIA_USER_KEY

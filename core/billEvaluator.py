@@ -12,7 +12,7 @@ from tvqbIntegration.utility.s3 import upload_file
 file_root_path = '/tmp/'
 
 
-def updateBIllInQB(bill_dict):
+def updateBIllInQB(bill_dict, view_id):
     bill_expense = billToExpense(bill_dict)
     bill_ref = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=bill_dict.get('bill_id'))
     if bill_ref:
@@ -26,7 +26,8 @@ def updateBIllInQB(bill_dict):
 
         bill_expense_ref = BillExpenseReference(
             tv_id=bill_dict.get('bill_id'),
-            qb_id=bill_in_qb.get('Bill').get('Id')
+            qb_id=bill_in_qb.get('Bill').get('Id'),
+            view_id=view_id
         )
         try:
             bill_expense_ref.save()

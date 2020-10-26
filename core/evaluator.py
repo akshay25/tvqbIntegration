@@ -3,7 +3,7 @@ from core.apis.quickBooks.invoice import deleteInvoice, updateInvoice, createInv
 from .models import InvoiceRef
 
 
-def updateInvoiceInQB(tv_invoice):
+def updateInvoiceInQB(tv_invoice, view_id):
     qb_invoice = tvToqb(tv_invoice)
     invoices = InvoiceRef.objects.filter(tv_id=tv_invoice['invoice_data']['tv_id'])
     if len(invoices) == 1:
@@ -12,7 +12,11 @@ def updateInvoiceInQB(tv_invoice):
         print('updated invoice in qb')
     else:
         invoice = createInvoice(qb_invoice)
-        invoice_ref = InvoiceRef(tv_id=tv_invoice['invoice_data']['tv_id'], qb_id=invoice['Invoice']['Id'])
+        invoice_ref = InvoiceRef(
+            tv_id=tv_invoice['invoice_data']['tv_id'],
+            qb_id=invoice['Invoice']['Id'],
+            view_id=view_id
+        )
         invoice_ref.save()
         print('created invoice in qb')
     return

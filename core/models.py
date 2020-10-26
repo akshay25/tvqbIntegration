@@ -5,11 +5,13 @@ from django.core.exceptions import ObjectDoesNotExist
 class InvoiceRef(models.Model):
     tv_id = models.CharField(max_length=30)
     qb_id = models.CharField(max_length=30)
+    view_id = models.CharField(max_length=30)
 
 
 class BillExpenseReference(models.Model):
     tv_id = models.CharField(max_length=30)
     qb_id = models.CharField(max_length=30)
+    view_id = models.CharField(max_length=30)
 
     objects = models.Manager()
 
@@ -23,6 +25,7 @@ class BillExpenseReference(models.Model):
 class DesignFeeRef(models.Model):
     tv_id = models.CharField(max_length=30)
     qb_id = models.CharField(max_length=30)
+    view_id = models.CharField(max_length=30)
 
     objects = models.Manager()
 

@@ -5,7 +5,7 @@ from core.models import DesignFeeRef
 from core.logger import logger
 
 
-def updateDesignFeeInQB(design_fee_dict):
+def updateDesignFeeInQB(design_fee_dict, view_id):
     designFeeDict = mapDesignFeeToQBAndReturn(design_fee_dict)
     designFeeRef = DesignFeeRef().getDesignFeeRefByTvId(design_fee_dict.get('df_id'))
 
@@ -17,7 +17,8 @@ def updateDesignFeeInQB(design_fee_dict):
         designFeeInQB = createInvoice(designFeeDict)
         designFeeRefObj = DesignFeeRef(
             tv_id=design_fee_dict.get('df_id'),
-            qb_id=designFeeInQB.get('Invoice').get('Id')
+            qb_id=designFeeInQB.get('Invoice').get('Id'),
+            view_id=view_id
         )
         try:
             designFeeRefObj.save()

@@ -39,13 +39,13 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
                 table_id, view_id, record_id, event_type))
             return
         elif event_type == 'AFTER_UPDATE':
-            record = getFullInvoiceData(record_id)
+            record = getFullInvoiceData(record_id, view_id)
             if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
                 logger.error('ignoring as the record is not in SENT state or it is a test project. {0} | {1} | {2} | {3}'.format(
                     table_id, view_id, record_id, event_type))
                 return
             refresh()
-            updateInvoiceInQB(record)
+            updateInvoiceInQB(record, view_id)
         elif event_type == 'AFTER_DELETE':
             refresh()
             deleteInvoiceFromQB(record_id)
@@ -55,13 +55,13 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
                 table_id, view_id, record_id, event_type))
             return
         elif event_type == 'AFTER_UPDATE':
-            bill_dict = getBillDetailsById(record_id)
+            bill_dict = getBillDetailsById(record_id, view_id)
             if bill_dict['STATUS'] != 'APPROVED':
                 logger.error('ignoring as the record is not in APPROVED state. {0} | {1} | {2} | {3}'.format(
                 table_id, view_id, record_id, event_type))
                 return
             refresh()
-            updateBIllInQB(bill_dict)
+            updateBIllInQB(bill_dict, view_id)
         elif event_type == 'AFTER_DELETE':
             refresh()
     elif designfee_table_id == table_id:
@@ -70,13 +70,13 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
                 table_id, view_id, record_id, event_type))
             return
         elif event_type == 'AFTER_UPDATE':
-            designfee_dict = getDesignFeeDetailsById(record_id)
+            designfee_dict = getDesignFeeDetailsById(record_id, view_id)
             if designfee_dict.get('STATUS') != 'SENT':  # Discuss the status
                 logger.error('ignoring as the record is not in SENT state. {0} | {1} | {2} | {3}'.format(
                     table_id, view_id, record_id, event_type))
                 return
             refresh()
-            updateDesignFeeInQB(designfee_dict)
+            updateDesignFeeInQB(designfee_dict, view_id)
         elif event_type == 'AFTER_DELETE':
             refresh()
             deleteInvoiceFromQB(record_id)
@@ -198,12 +198,13 @@ def process_invoice(invoice_id):
         logger.error('process_invoice | invoices not found for id | {0}'.format(invoice_id))
         return
     tv_invoice_id = invoices[0].tv_id
+    view_id = invoices[0].view_id
     if total_amt == balance:
-        updateTvInvoiceStatus(tv_invoice_id, 'UNPAID')
+        updateTvInvoiceStatus(tv_invoice_id, 'UNPAID', view_id)
     elif balance == 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'FULL')
+        updateTvInvoiceStatus(tv_invoice_id, 'FULL', view_id)
     elif balance < total_amt and balance > 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL')
+        updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL', view_id)
     return
 
 
@@ -226,13 +227,14 @@ def process_DesignFee(design_fee_qb_id):
         return
 
     design_fee_tv_id = design_fee_ref.tv_id
+    view_id = design_fee_ref.view_id
 
     if total_amt == balance:
-        updateDesignFeeStatus(design_fee_tv_id, 'UNPAID')
+        updateDesignFeeStatus(design_fee_tv_id, 'UNPAID', view_id)
     elif balance == 0:
-        updateDesignFeeStatus(design_fee_tv_id, 'FULL')
+        updateDesignFeeStatus(design_fee_tv_id, 'FULL', view_id)
     elif 0 < balance < total_amt:
-        updateDesignFeeStatus(design_fee_tv_id, 'PARTIAL')
+        updateDesignFeeStatus(design_fee_tv_id, 'PARTIAL', view_id)
 
     return
 
@@ -273,6 +275,7 @@ def process_bill(bill_id):
         return
 
     tv_id = bill_refs[0].tv_id
+    view_id = bill_refs[0].view_id
 
     # bill_ref = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=bill_id)
     # if not bill_ref:
@@ -282,11 +285,11 @@ def process_bill(bill_id):
     # tv_id = bill_ref.tv_id
 
     if total_amt == balance:
-        updateTvBillStatus(tv_id, 'UNPAID')
+        updateTvBillStatus(tv_id, 'UNPAID', view_id)
     elif balance == 0:
-        updateTvBillStatus(tv_id, 'FULL')
+        updateTvBillStatus(tv_id, 'FULL', view_id)
     elif 0 < balance < total_amt:
-        updateTvBillStatus(tv_id, 'PARTIAL')
+        updateTvBillStatus(tv_id, 'PARTIAL', view_id)
 
     #   # Bill payment Logic
     return
