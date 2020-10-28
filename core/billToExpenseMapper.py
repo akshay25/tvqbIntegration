@@ -14,17 +14,17 @@ def billToExpense(bill_dict):
 
 def _billMapper(bill_dict):
     return {
-        'DocNumber': bill_dict['BILL #'],
-        'TxnDate': bill_dict['BILL DATE'],
-        'DueDate': bill_dict['DUE DATE'],
-        'VendorRef': _getVendorRef(bill_dict['MANUFACTURER']),
+        'DocNumber': bill_dict.get('BILL #'),
+        'TxnDate': bill_dict.get('BILL DATE'),
+        'DueDate': bill_dict.get('DUE DATE'),
+        'VendorRef': _getVendorRef(bill_dict.get('MANUFACTURER')),
         'TotalAmt': bill_dict.get('BILL TOTAL'),
         'PrivateNote': bill_dict.get('BILL PDF LINK'),
         'Line': _getLineItems(
-            bill_dict['SUBTOTAL'],
-            bill_dict['FREIGHT'],
-            bill_dict['PO# FROM DOCPARSER'],
-            bill_dict['FREIGHT FROM DOCPARSER'])
+            bill_dict.get('SUBTOTAL'),
+            bill_dict.get('FREIGHT'),
+            bill_dict.get('PO# FROM DOCPARSER'),
+            bill_dict.get('FREIGHT FROM DOCPARSER'))
     }
 
 

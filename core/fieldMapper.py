@@ -6,35 +6,35 @@ from core.email import send_email
 from core.logger import logger
 
 def tvToqb(fullInvoiceData):
-    invoice_data = fullInvoiceData['invoice_data']
-    items = fullInvoiceData['invoice_items']
+    invoice_data = fullInvoiceData.get('invoice_data')
+    items = fullInvoiceData.get('invoice_items')
     qb_invoice = _invoiceMapper(invoice_data)
     qb_invoice['Line'] = _itemsMapper(invoice_data, items)
-    customer_name = invoice_data['CONTRACTOR']
-    qb_invoice['CustomerRef'] = _customer_ref(customer_name, qb_invoice['DocNumber'])
+    customer_name = invoice_data.get('CONTRACTOR')
+    qb_invoice['CustomerRef'] = _customer_ref(customer_name, qb_invoice.get('DocNumber'))
     return qb_invoice
 
 def _invoiceMapper(invoice_data):
     return {
-        'DocNumber': invoice_data['INVOICE ID'],
-        'DueDate': invoice_data['DUE DATE'],
-        'CustomerMemo': {'value': invoice_data['NOTES']},
-        'SalesTermRef': {'value': _salesTermMapper(invoice_data['PAYMENT TERMS'])},
-        'BillEmail': {'Address': invoice_data['CONTRACTOR EMAIL']},
-        'TxnDate': invoice_data['INVOICE DATE'],
-        'TxnTaxDetail': _get_tax_details(invoice_data['SALE TAX'], invoice_data['INVOICE ID']),
+        'DocNumber': invoice_data.get('INVOICE ID'),
+        'DueDate': invoice_data.get('DUE DATE'),
+        'CustomerMemo': {'value': invoice_data.get('NOTES')},
+        'SalesTermRef': {'value': _salesTermMapper(invoice_data.get('PAYMENT TERMS'))},
+        'BillEmail': {'Address': invoice_data.get('CONTRACTOR EMAIL')},
+        'TxnDate': invoice_data.get('INVOICE DATE'),
+        'TxnTaxDetail': _get_tax_details(invoice_data.get('SALE TAX'), invoice_data.get('INVOICE ID')),
         'CustomField': [
             {
                 'DefinitionId': '1',
                 'Name': 'Project',
                 'Type': 'StringType',
-                'StringValue': invoice_data['PROJECT']
+                'StringValue': invoice_data.get('PROJECT')
             }, 
             {
                 'DefinitionId': '2',
                 'Name': 'Source Document',
                 'Type': 'StringType',
-                'StringValue': invoice_data['SALES ORDER']
+                'StringValue': invoice_data.get('SALES ORDER')
             }
         ]
     }
