@@ -23,7 +23,7 @@ def updateTvInvoiceStatus(invoice_id, status, view_id):
         logger.error('payment status not updated for invoice {0} | {1} | {2}'.format(invoice_id, resp.json(), resp.status_code))
 
 def getFullInvoiceData(invoice_id, view_id):
-    invoice_data = getInvoiceData(invoice_id)
+    invoice_data = getInvoiceData(invoice_id, view_id)
     invoice_item_data = getInvoiceItems(invoice_id)
 
     return {
