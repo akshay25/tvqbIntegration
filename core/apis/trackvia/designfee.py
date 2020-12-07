@@ -11,8 +11,8 @@ request_base_url = "https://go.trackvia.com/accounts/21782/apps/49/tables/743/re
 
 
 def getDesignFeeDetailsById(df_id, view_id):
-    if not view_id:
-        view_id = '4047'
+    #if not view_id:
+    view_id = '4046'
     request_url = request_base_url.format(df_id, view_id)
     params = {
         'access_token': get_access_token(),
@@ -74,8 +74,8 @@ def getReferencedFieldMappings():
 
 
 def updateDesignFeeStatus(df_id, status, view_id):
-    if not view_id:
-        view_id = '4047'
+    #if not view_id:
+    view_id = '4046'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/743/records/{0}?formId=6544&viewId={1}'\
         .format(df_id, view_id)
     params = {

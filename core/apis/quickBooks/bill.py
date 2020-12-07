@@ -12,7 +12,7 @@ def createBillInQB(data):
     if resp.status_code == 200:
         return resp.json()
     else:
-        print('failed expense creation', data, resp.json(), resp.status_code)
+        logger.error('failed expense creation, data={0}, resp={1}, status_code={2}', data, resp.json(), resp.status_code)
         pass
 
 
@@ -44,6 +44,7 @@ def updateBillInQB(data, is_sparse=False, retry_count=3):
     if not bill_dict:
         if retry_count >= 0:
             updateBillInQB(data, is_sparse, retry_count-1)
+            return
         else:
             # print('updateBillInQB unable to fetch bill')
             logger.error("updateBillInQB unable to fetch bill for {0}".format(bill_id))

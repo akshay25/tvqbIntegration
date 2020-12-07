@@ -8,8 +8,8 @@ request_base_url = "https://go.trackvia.com/accounts/21782/apps/49/tables/786/re
 
 
 def getBillDetailsById(bill_id, view_id):
-    if not view_id:
-        view_id = '4205'
+    #if not view_id:
+    view_id = '4205'
     request_url = request_base_url.format(bill_id, view_id)
     params = {
         'access_token': get_access_token(),
@@ -89,8 +89,8 @@ def getReferencedFieldMappings():
 
 
 def updateTvBillStatus(bill_id, status, view_id):
-    if not view_id:
-        view_id = '4205'
+    #if not view_id:
+    view_id = '4205'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?formId=6060&viewId={1}'\
         .format(bill_id, view_id)
     params = {

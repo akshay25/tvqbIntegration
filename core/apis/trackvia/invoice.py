@@ -5,8 +5,8 @@ from core.logger import logger
 from core.apis.trackvia.authentication import get_access_token
 
 def updateTvInvoiceStatus(invoice_id, status, view_id):
-    if not view_id:
-        view_id = '4118'
+    #if not view_id:
+    view_id = '4027'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5429&viewId={1}'.format(invoice_id, view_id)
     params = {
         'access_token': get_access_token(),
@@ -32,8 +32,8 @@ def getFullInvoiceData(invoice_id, view_id):
             }
 
 def getInvoiceData(invoice_id, view_id):
-    if not view_id:
-        view_id = '4118'
+    #if not view_id:
+    view_id = '4027'
     url = "https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?viewId={1}&formId=5429".format(
         invoice_id, view_id)
     params = {
