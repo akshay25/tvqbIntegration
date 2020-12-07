@@ -52,7 +52,7 @@ def _itemsMapper(invoice_data, items):
     line_items = []
     for item in items:
         Description = "{0}/{1}".format(item['Type'], item['Description'])
-        item_name= "{0} {1}".format(item['Manufacturer'].upper(), item['Catalog'].upper())
+        item_name= "{0} {1}".format(item['Manufacturer'].upper().rstrip(), item['Catalog'].upper().rstrip())
         Qty = item['Quantity']
         Rate = item['Unit CN']
         Amount = item['Total CN']
