@@ -53,7 +53,11 @@ def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docp
                 'AccountRef': {
                     'value': '47'
                 },
-                'TaxCodeRef': {'value': 'TAX'}
+                'TaxCodeRef': {'value': 'TAX'},
+                'ClassRef': {
+                    'value': '900000000001263637',
+                    'name': 'Procurement'
+                }
             }
         }
     )
@@ -70,7 +74,11 @@ def _getLineItems(subtotal, freight_charge, po_from_docparser, freight_from_docp
                         'name': freight_item.get('item').get('Name'),
                         'value': freight_item.get('item').get('Id')
                     },
-                    'TaxCodeRef': {'value': 'NON'}
+                    'TaxCodeRef': {'value': 'NON'},
+                    'ClassRef': {
+                        'value': '900000000001263637',
+                        'name': 'Procurement'
+                    }
                 }
             }
         )

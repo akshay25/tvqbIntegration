@@ -76,7 +76,8 @@ def getFieldMappings():
         (24125, 'PAYMENT AMOUNT 1'),
         (24126, 'PAYMENT AMOUNT 2'),
         (19509, 'ACCOUNTANT NOTES'),
-        (19510, 'ILC NOTES')
+        (19510, 'ILC NOTES'),
+        (25352, 'ACCOUNTING CLASS')
     ))
 
 
