@@ -21,9 +21,13 @@ def getBillDetailsById(bill_id, view_id):
         params=params)
 
     if response.status_code != 200:
-        # log
+        logger.error("getBillDetailsById | response code not 200 for bill {0} | {1}".format(
+            bill_id, response.status_code))
         pass
 
+    if not (response.json() and response.json().get('data')):
+        logger.error("getBillDetailsById | response null for bill {0}".format(bill_id))
+        return
     response_data_dict = response.json()['data']
     field_mappings = getFieldMappings()
     ref_field_mappings = getReferencedFieldMappings()
@@ -89,7 +93,7 @@ def getReferencedFieldMappings():
     ))
 
 
-def updateTvBillStatus(bill_id, status, view_id):
+def updateTvBillStatus(bill_id, status, view_id, payment_id):
     #if not view_id:
     view_id = '4205'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/786/records/{0}?formId=6060&viewId={1}'\
@@ -111,7 +115,11 @@ def updateTvBillStatus(bill_id, status, view_id):
     }
     resp = requests.put(url=url, params=params, json=body)
     if resp.status_code != 200:
-        logger.error('payment status not updated for bill, {0} | {1} | {2}'.format(bill_id, resp.json(), resp.status_code))
+        logger.error('updateTvBillStatus | payment status not updated for bill, {0} | {1} | {2} | {3}'.format(
+            bill_id, payment_id, resp.json(), resp.status_code))
+    else:
+        logger.info('updateTvBillStatus | payment status updated for bill fee, {0} | {1} | {2} | {3}'.format(
+            bill_id, payment_id, resp.json(), resp.status_code))
 
 
 def downloadAndSavePdf(pdf_link, pdf_name):

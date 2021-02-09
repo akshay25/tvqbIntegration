@@ -73,7 +73,7 @@ def getReferencedFieldMappings():
     ))
 
 
-def updateDesignFeeStatus(df_id, status, view_id):
+def updateDesignFeeStatus(df_id, status, view_id, payment_id):
     #if not view_id:
     view_id = '4046'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/743/records/{0}?formId=6544&viewId={1}'\
@@ -95,6 +95,9 @@ def updateDesignFeeStatus(df_id, status, view_id):
     }
     resp = requests.put(url=url, params=params, json=body)
     if resp.status_code != 200:
-        logger.error('payment status not updated for design fee, {0} | {1} | {2}'.format(
-            df_id, resp.json(), resp.status_code))
+        logger.error('updateDesignFeeStatus | payment status not updated for design fee, {0} | {1} | {2} | {3}'.format(
+            df_id, payment_id, resp.json(), resp.status_code))
+    else:
+        logger.info('updateDesignFeeStatus | payment status updated for design fee, {0} | {1} | {2} | {3}'.format(
+            df_id, payment_id, resp.json(), resp.status_code))
 

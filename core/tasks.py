@@ -145,9 +145,9 @@ def processWebhookData(body_unicode):
     bill_payment_ids = []
     entities = data['eventNotifications'][0]['dataChangeEvent']['entities']
     for entity in entities:
-        if entity['name'] == 'Payment':
+        if entity['name'] == 'Payment' and entity['operation'] != 'Delete':
             payment_ids.append(entity['id'])
-        elif entity['name'] == 'BillPayment':
+        elif entity['name'] == 'BillPayment' and entity['operation'] != 'Delete':
             bill_payment_ids.append(entity['id'])
 
     logger.info("payment_ids: {0}, bill_payment_ids: {1}".format(payment_ids, bill_payment_ids))
@@ -160,23 +160,33 @@ def processWebhookData(body_unicode):
 
 
 def processInvoices(payment_ids):
-    invoice_ids = []
+    invoice_payment_mapping = []
     for payment_id in payment_ids:
-        payment = readPayment(payment_id)
-        if payment == None:
-            logger.error('payment not found for id {0}'.format(payment_id))
-            break
-        lines = payment['Payment']['Line']
-        for line in lines:
-            for ltxn in line['LinkedTxn']:
-                if ltxn['TxnType'] == 'Invoice':
-                    invoice_ids.append(ltxn['TxnId'])
-    invoice_ids = list(set(invoice_ids))
-    for invoice_id in invoice_ids:
-        if checkIfDesignFee(invoice_id) != None:
-            process_DesignFee(invoice_id)
+        try:
+            payment = readPayment(payment_id)
+            if not payment:
+                logger.error('processInvoices | payment not found for id {0}'.format(payment_id))
+                continue
+            lines = []
+            if payment.get("Payment") and payment.get("Payment").get("Line"):
+                lines = payment.get("Payment").get("Line")
+            else:
+                logger.error("processInvoices | got incorrect payment object {0}".format(payment))
+            for line in lines:
+                for ltxn in line['LinkedTxn']:
+                    if ltxn['TxnType'] == 'Invoice' and ltxn.get("TxnId"):
+                        invoice_payment_mapping.append({
+                            "invoice_id": ltxn.get("TxnId"),
+                            "payment_id": payment_id
+                        })
+        except Exception as e:
+            logger.error("processInvoices | Unexpected error for payment {0} occurred as {1}".format(payment_id, e))
+    invoice_payment_mapping = list(set(invoice_payment_mapping))
+    for invoice_payment_map in invoice_payment_mapping:
+        if checkIfDesignFee(invoice_payment_map):
+            processDesignFee(invoice_payment_map)
         else:
-            process_invoice(invoice_id)
+            process_invoice(invoice_payment_map)
 
 
 def checkIfDesignFee(invoice_id):
@@ -184,112 +194,138 @@ def checkIfDesignFee(invoice_id):
     return designFeeRef
 
 
-def process_invoice(invoice_id):
+def process_invoice(invoice_payment_map):
+    invoice_id = invoice_payment_map.get("invoice_id")
+    payment_id = invoice_payment_map.get("payment_id")
     invoice = readInvoice(invoice_id)
-    logger.info("process_invoice | {0} | {1}".format(invoice_id, invoice))
-    if invoice == None:
-        logger.error('invoice not found for id {0}'.format(invoice_id))
+
+    if not invoice:
+        logger.error('invoicein QB not found for {0} | {1}'.format(payment_id, invoice_id))
         return
+
+    logger.info("process_invoice | info |{0} | {1} | {2}".format(payment_id, invoice_id, invoice))
+
     total_amt = invoice['Invoice']['TotalAmt']
     balance = invoice['Invoice']['Balance']
-    logger.info("process_invoice | {0} | {1}".format(total_amt, balance))
+    logger.info("process_invoice | Sanity Log | {0} | {1} | {2} | {3}".format(
+        total_amt, balance, invoice_id, payment_id))
+
     invoices = InvoiceRef.objects.filter(qb_id=invoice_id)
     if len(invoices) == 0:
-        logger.error('process_invoice | invoices not found for id | {0}'.format(invoice_id))
+        logger.error('process_invoice | invoices in SQL not found for id | {0} | {1}'.format(payment_id, invoice_id))
         return
+
     tv_invoice_id = invoices[0].tv_id
     view_id = invoices[0].view_id
+
+    logger.info("process_invoice | MasterLog | {0} | {1} | {2}".format(payment_id, invoice_id, tv_invoice_id))
+
     if total_amt == balance:
-        updateTvInvoiceStatus(tv_invoice_id, 'UNPAID', view_id)
+        updateTvInvoiceStatus(tv_invoice_id, 'UNPAID', view_id, payment_id)
     elif balance == 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'FULL', view_id)
+        updateTvInvoiceStatus(tv_invoice_id, 'FULL', view_id, payment_id)
     elif balance < total_amt and balance > 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL', view_id)
+        updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL', view_id, payment_id)
     return
 
 
-def process_DesignFee(design_fee_qb_id):
+def processDesignFee(design_fee_payment_map):
+    design_fee_qb_id = design_fee_payment_map.get("invoice_id")
+    payment_id = design_fee_payment_map.get("payment_id")
     design_fee_qb_obj = readInvoice(design_fee_qb_id)
-    logger.info("process_DesignFee | {0}".format(design_fee_qb_id))
 
-    if design_fee_qb_obj == None:
-        logger.error('design_fee_qb_obj not found for id {0}'.format(design_fee_qb_id))
+    if not design_fee_qb_obj:
+        logger.error('processDesignFee | DesignFee in QB not found for {0} | {1}'.format(payment_id, design_fee_qb_id))
         return
+
+    logger.info("processDesignFee | info | {0} | {1} | {2}}".format(payment_id, design_fee_qb_id, design_fee_qb_obj))
 
     total_amt = design_fee_qb_obj['Invoice']['TotalAmt']
     balance = design_fee_qb_obj['Invoice']['Balance']
-    logger.info("process_DesignFee | {0} | {1}".format(total_amt, balance))
+    logger.info("processDesignFee | Sanity Log | {0} | {1} | {2} | {3}".format(
+        total_amt, balance, design_fee_qb_id, payment_id))
 
     design_fee_ref = DesignFeeRef().getDesignFeeRefByQbId(design_fee_qb_id)
 
     if not design_fee_ref:
-        logger.error('process_DesignFee | DesignFee not found for id | {0}'.format(design_fee_qb_id))
+        logger.error('processDesignFee | DesignFee in SQL not found for id | {0} | {1}'.format(
+            payment_id, design_fee_qb_id))
         return
 
     design_fee_tv_id = design_fee_ref.tv_id
     view_id = design_fee_ref.view_id
 
+    logger.info("processDesignFee | MasterLog | {0} | {1} | {2}".format(payment_id, design_fee_qb_id, design_fee_tv_id))
+
     if total_amt == balance:
-        updateDesignFeeStatus(design_fee_tv_id, 'UNPAID', view_id)
+        updateDesignFeeStatus(design_fee_tv_id, 'UNPAID', view_id, payment_id)
     elif balance == 0:
-        updateDesignFeeStatus(design_fee_tv_id, 'FULL', view_id)
+        updateDesignFeeStatus(design_fee_tv_id, 'FULL', view_id, payment_id)
     elif 0 < balance < total_amt:
-        updateDesignFeeStatus(design_fee_tv_id, 'PARTIAL', view_id)
+        updateDesignFeeStatus(design_fee_tv_id, 'PARTIAL', view_id, payment_id)
 
     return
 
 
 def processBills(payment_ids):
-    bill_ids = []
+    bill_payment_mapping = []
     for payment_id in payment_ids:
-        payment = readBillPayment(payment_id)
-        if not payment:
-            logger.error('processBills | payment not found for id | {0}'.format(payment_id))
-            break
-        lines = payment['BillPayment']['Line']
-        for line in lines:
-            for ltxn in line['LinkedTxn']:
-                if ltxn['TxnType'] == 'Bill':  # Confirm this type
-                    bill_ids.append(ltxn['TxnId'])
-    bill_ids = list(set(bill_ids))
-    for bill_id in bill_ids:
-        process_bill(bill_id)
+        try:
+            payment = readBillPayment(payment_id)
+            if not payment:
+                logger.error('processBills | BillPayment not found for id | {0}'.format(payment_id))
+                break
+            lines = []
+            if payment.get("BillPayment") and payment.get("BillPayment").get("Line"):
+                lines = payment.get("BillPayment").get("Line")
+            else:
+                logger.error("processBills | got incorrect payment object {0}".format(payment))
+            for line in lines:
+                for ltxn in line['LinkedTxn']:
+                    if ltxn['TxnType'] == 'Bill' and ltxn.get('TxnId'):  # Confirm this type
+                        bill_payment_mapping.append({
+                            "bill_id": ltxn.get("TxnId"),
+                            "payment_id": payment_id
+                        })
+        except Exception as e:
+            logger.error("processBills | Unexpected error for payment {0} occurred as {1}".format(payment_id, e))
+    bill_payment_mapping = list(set(bill_payment_mapping))
+    for bill_payment_mapping in bill_payment_mapping:
+        process_bill(bill_payment_mapping)
 
 
-def process_bill(bill_id):
+def process_bill(bill_payment_mapping):
+    bill_id = bill_payment_mapping.get("bill_id")
+    payment_id = bill_payment_mapping.get("payment_id")
     bill = readBillFromQB(bill_id)
 
     if not bill:
-        logger.error('process_bill | bill not found for id | {0}'.format(bill_id))
+        logger.error('process_bill | Bill in QB not found for {0} | {1}'.format(payment_id, bill_id))
         return
 
-    logger.error('process_bill | {0}'.format(bill))
+    logger.info("process_bill | info | {0} | {1} | {2}}".format(payment_id, bill_id, bill))
 
     total_amt = bill.get('Bill').get('TotalAmt')
     balance = bill.get('Bill').get('Balance')
-    logger.error("process_bill | log2 | {0} | {1}".format(total_amt, balance))
+    logger.info("process_bill | Sanity Log | {0} | {1} | {2} | {3}".format(
+        total_amt, balance, bill_id, payment_id))
 
     bill_refs = BillExpenseReference.objects.filter(qb_id=bill_id)
     if len(bill_refs) == 0:
-        logger.error('process_bill | bill_ref not found for id | {0}'.format(bill_id))
+        logger.error('process_bill | Bill in SQL not found for id | {0} | {1}'.format(
+            payment_id, bill_id))
         return
 
     tv_id = bill_refs[0].tv_id
     view_id = bill_refs[0].view_id
 
-    # bill_ref = BillExpenseReference().getBillExpenseReferanceByTvId(bill_id=bill_id)
-    # if not bill_ref:
-    #     print('billreferance not found for id ', bill_id)
-    #     return
-
-    # tv_id = bill_ref.tv_id
+    logger.info("process_bill | MasterLog | {0} | {1} | {2}".format(payment_id, bill_id, tv_id))
 
     if total_amt == balance:
-        updateTvBillStatus(tv_id, 'UNPAID', view_id)
+        updateTvBillStatus(tv_id, 'UNPAID', view_id, payment_id)
     elif balance == 0:
-        updateTvBillStatus(tv_id, 'FULL', view_id)
+        updateTvBillStatus(tv_id, 'FULL', view_id, payment_id)
     elif 0 < balance < total_amt:
-        updateTvBillStatus(tv_id, 'PARTIAL', view_id)
+        updateTvBillStatus(tv_id, 'PARTIAL', view_id, payment_id)
 
-    #   # Bill payment Logic
     return
