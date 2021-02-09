@@ -1,17 +1,21 @@
 import requests
 from django.conf import settings
 from core.apis.quickBooks.authentication import get_access_token
+from core.logger import logger
+
 
 def readPayment(payment_id):
     access_token = get_access_token()
     url = _get_url() + '/' + payment_id + '?minorversion=51'
     headers = _get_headers(access_token)
-    r = requests.get(url = url, headers = headers)
+    r = requests.get(url=url, headers=headers)
     if r.status_code == 200:
+        logger.debug("readPayment | API success for id {0}".format(payment_id))
         return r.json()
     else:
         print('log read invoice API failed', payment_id, r.json(), r.status_code)
-        return {'error': "Not found"}
+        logger.debug("readPayment | API failed for id {0}".format(payment_id))
+        return None
 
 
 def _get_url():

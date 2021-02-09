@@ -30,7 +30,7 @@ def _billMapper(bill_dict):
 
 def _getVendorRef(name):
     vendorRef = getVendor(name)
-    if not vendorRef:
+    if not vendorRef or not vendorRef.get("Vendor"):
         logger.error(
             'error finding customer: {0} in Quickbooks while processing trackvia bill'.format(name))
         send_email('TV-QBO integeration error',

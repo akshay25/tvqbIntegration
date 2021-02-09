@@ -4,7 +4,7 @@ import requests
 from core.logger import logger
 from core.apis.trackvia.authentication import get_access_token
 
-def updateTvInvoiceStatus(invoice_id, status, view_id):
+def updateTvInvoiceStatus(invoice_id, status, view_id, payment_id):
     #if not view_id:
     view_id = '4027'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5429&viewId={1}'.format(invoice_id, view_id)
@@ -20,7 +20,11 @@ def updateTvInvoiceStatus(invoice_id, status, view_id):
             }
     resp = requests.put(url = url, params = params, json = body)
     if resp.status_code != 200:
-        logger.error('payment status not updated for invoice {0} | {1} | {2}'.format(invoice_id, resp.json(), resp.status_code))
+        logger.error('updateTvInvoiceStatus | payment status not updated for invoice {0} | {1} | {2} | {3}'.format(
+            invoice_id, payment_id, resp.json(), resp.status_code))
+    else:
+        logger.error('updateTvInvoiceStatus | payment status updated for invoice {0} | {1} | {2} | {3}'.format(
+            invoice_id, payment_id, resp.json(), resp.status_code))
 
 def getFullInvoiceData(invoice_id, view_id):
     invoice_data = getInvoiceData(invoice_id, view_id)

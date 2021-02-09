@@ -24,6 +24,10 @@ def updateBIllInQB(bill_dict, view_id):
         # if bill_dict.get('BILL PDF LINK'):
             # downloadAndForwardAttachable(bill_dict, bill_in_qb)
 
+        if not bill_in_qb.get('Bill') or not bill_in_qb.get('Bill').get('Id'):
+            logger.error("updateBIllInQB | bill not created in QB for {0}".format(bill_dict))
+            return
+
         bill_expense_ref = BillExpenseReference(
             tv_id=bill_dict.get('bill_id'),
             qb_id=bill_in_qb.get('Bill').get('Id'),
