@@ -119,10 +119,15 @@ def _get_item_ref(item_name, tv_invoice_id):
     return ItemRef
 
 def _get_tax_details(sales_tax, tv_invoice_id):
-    x = sales_tax.split(' - ')
-    if len(x) != 2:
-        return {}
-    taxcode = queryTaxCode(x[1])
+    sales_tax = sales_tax.strip()
+    taxquery = 'OUT_OF_SCOPE'
+    if sales_tax != '':
+        x = sales_tax.split(' - ')
+        if len(x) != 2:
+            logger.error('error finding taxcode: {0} in trackvia while parsing sales tax: {1}'.format(taxcode, tv_invoice_id))
+        else:    
+            taxquery = x[1]
+    taxcode = queryTaxCode(taxquery)
     if 'TaxCode' in taxcode:
         return {'TxnTaxCodeRef' : {'value': taxcode['TaxCode']['Id']}}
     else:

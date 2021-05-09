@@ -54,7 +54,6 @@ def getDesignFeeDetailsById(df_id, view_id):
 def getFieldMappings():
     return dict((
         (18762, 'STATUS'),
-        (18770, 'PROJECT'),
         (18771, 'PHASE'),
         (18760, 'TOTAL $'),  # MANUAL AMOUNT
         (23358, 'DESIGN INVOICE #'),

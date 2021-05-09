@@ -25,7 +25,15 @@ def getDesignFeeMapping(designFeeDict):
         'DocNumber': designFeeDict.get('DESIGN INVOICE #'),
         'DueDate':designFeeDict.get('DUE DATE'),  # check is due date and submission date are same
         'TxnDate': designFeeDict.get('SENT DATE'),  # check is due date and submission date are same
-        'TotalAmt': designFeeDict.get('TOTAL $')
+        'TotalAmt': designFeeDict.get('TOTAL $'),
+        'CustomField': [
+            {
+                'DefinitionId': '1',
+                'Name': 'Project',
+                'Type': 'StringType',
+                'StringValue': designFeeDict.get('PROJECT')
+            }
+        ]
     }
 
 
