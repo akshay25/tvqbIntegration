@@ -13,6 +13,7 @@ from core.apis.quickBooks.authentication import refresh
 from core.apis.trackvia.bills import getBillDetailsById, updateTvBillStatus
 from core.apis.trackvia.designfee import getDesignFeeDetailsById, updateDesignFeeStatus
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
+from core.apis.trackvia.manual_invoice import getCombinedManualInvoiceData
 from core.designFeeEvaluator import updateDesignFeeInQB
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.billEvaluator import updateBIllInQB
@@ -25,6 +26,7 @@ from django.conf import settings
 
 invoice_table_id = '740'
 invoice_view_id = '4027'
+manual_invoice_view_id = '5374'
 bill_table_id = '786'
 bill_view_id = '4205'
 designfee_table_id = '743'
@@ -39,7 +41,10 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
                 table_id, view_id, record_id, event_type))
             return
         elif event_type == 'AFTER_UPDATE':
-            record = getFullInvoiceData(record_id, view_id)
+            if manual_invoice_view_id == view_id:
+                record = getCombinedManualInvoiceData(record_id)
+            else:
+                record = getFullInvoiceData(record_id, view_id)
             if record['invoice_data']['STATUS'] != 'SENT' or isTestProject(record):
                 logger.error('ignoring as the record is not in SENT state or it is a test project. {0} | {1} | {2} | {3}'.format(
                     table_id, view_id, record_id, event_type))

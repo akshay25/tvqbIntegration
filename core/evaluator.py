@@ -4,6 +4,7 @@ from .models import InvoiceRef
 
 
 def updateInvoiceInQB(tv_invoice, view_id):
+    is_manual = True if tv_invoice.get('is_manual') else False
     qb_invoice = tvToqb(tv_invoice)
     invoices = InvoiceRef.objects.filter(tv_id=tv_invoice['invoice_data']['tv_id'])
     if len(invoices) == 1:
@@ -15,7 +16,8 @@ def updateInvoiceInQB(tv_invoice, view_id):
         invoice_ref = InvoiceRef(
             tv_id=tv_invoice['invoice_data']['tv_id'],
             qb_id=invoice['Invoice']['Id'],
-            view_id=view_id
+            view_id=view_id,
+            is_manual=is_manual
         )
         invoice_ref.save()
         print('created invoice in qb')

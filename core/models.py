@@ -6,6 +6,7 @@ class InvoiceRef(models.Model):
     tv_id = models.CharField(max_length=30)
     qb_id = models.CharField(max_length=30)
     view_id = models.CharField(max_length=30, null=True, blank=True)
+    is_manual = models.BooleanField(null=True, blank=True, default=False)
 
 
 class BillExpenseReference(models.Model):
