@@ -70,8 +70,6 @@ def _itemsMapper(invoice_data, items, is_manual):
         item_name = Description if is_manual else "{0} {1}".format(
             item.get('Manufacturer').upper().rstrip(),
             item.get('Catalog').upper().rstrip())
-        if item_name == '':
-            item_name = Description.lstrip().rstrip()
         Qty = item['Quantity']
         Rate = item['Unit DN'] if is_manual else item['Unit CN']
         Amount = item['Total DN'] if is_manual else item['Total CN']
