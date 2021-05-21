@@ -153,16 +153,16 @@ def invoiceItemsFormatter(response):
     return invoice_item_list
 
 
-def updateManualInvoiceStatus(df_id, status):
+def updateManualInvoiceStatus(mi_id, status):
     view_id = '5374'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5249&viewId={1}'\
-        .format(df_id, view_id)
+        .format(mi_id, view_id)
     params = {
         'access_token': get_access_token(),
         'user_key': settings.TRACKVIA_USER_KEY
     }
     body = {
-        'id': df_id,
+        'id': mi_id,
         'data': [
             {
                 'fieldMetaId': '18716',
@@ -174,6 +174,6 @@ def updateManualInvoiceStatus(df_id, status):
     }
     resp = requests.put(url=url, params=params, json=body)
     if resp.status_code != 200:
-        logger.error('payment status not updated for design fee, {0} | {1} | {2}'.format(
-            df_id, resp.json(), resp.status_code))
+        logger.error('payment status not updated for manual invoice, {0} | {1} | {2}'.format(
+            mi_id, resp.json(), resp.status_code))
 

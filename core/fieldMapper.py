@@ -68,7 +68,7 @@ def _itemsMapper(invoice_data, items, is_manual):
             item.get('Manufacturer').upper().rstrip(),
             item.get('Catalog').upper().rstrip())
         if item_name == '':
-            item_name = Description
+            item_name = Description.lstrip().rstrip()
         Qty = item['Quantity']
         Rate = item['Unit DN'] if is_manual else item['Unit CN']
         Amount = item['Total DN'] if is_manual else item['Total CN']
@@ -151,7 +151,7 @@ def _get_tax_details(sales_tax, tv_invoice_id):
         x = sales_tax.split(' - ')
         if len(x) != 2:
             logger.error(
-                'error finding taxcode: {0} in trackvia while parsing sales tax: {1}'.format(taxcode, tv_invoice_id))
+                'error finding taxcode: {0} in trackvia while parsing sales tax: {1}'.format(sales_tax, tv_invoice_id))
         else:
             taxquery = x[1]
     taxcode = queryTaxCode(taxquery)
@@ -162,7 +162,7 @@ def _get_tax_details(sales_tax, tv_invoice_id):
                                                                                                               tv_invoice_id))
         send_email('TV-QBO integeration error',
                    'We got an error finding taxcode: {0} in Quickbooks while processing trackvia invoice: {1}. Please update the invoice in Quickbooks manually.'.format(
-                       cust_name, tv_invoice_id))
+                       sales_tax, tv_invoice_id))
 
 
 def _salesTermMapper(term):

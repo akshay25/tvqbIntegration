@@ -13,7 +13,7 @@ from core.apis.quickBooks.authentication import refresh
 from core.apis.trackvia.bills import getBillDetailsById, updateTvBillStatus
 from core.apis.trackvia.designfee import getDesignFeeDetailsById, updateDesignFeeStatus
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
-from core.apis.trackvia.manual_invoice import getCombinedManualInvoiceData
+from core.apis.trackvia.manual_invoice import getCombinedManualInvoiceData, updateManualInvoiceStatus
 from core.designFeeEvaluator import updateDesignFeeInQB
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.billEvaluator import updateBIllInQB
@@ -204,12 +204,22 @@ def process_invoice(invoice_id):
         return
     tv_invoice_id = invoices[0].tv_id
     view_id = invoices[0].view_id
+    is_manual = invoices[0].is_manual
     if total_amt == balance:
-        updateTvInvoiceStatus(tv_invoice_id, 'UNPAID', view_id)
+        if is_manual:
+            updateManualInvoiceStatus(tv_invoice_id, 'UNPAID')
+        else:
+            updateTvInvoiceStatus(tv_invoice_id, 'UNPAID', view_id)
     elif balance == 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'FULL', view_id)
+        if is_manual:
+            updateManualInvoiceStatus(tv_invoice_id, 'FULL')
+        else:
+            updateTvInvoiceStatus(tv_invoice_id, 'FULL', view_id)
     elif balance < total_amt and balance > 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL', view_id)
+        if is_manual:
+            updateManualInvoiceStatus(tv_invoice_id, 'PARTIAL')
+        else:
+            updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL')
     return
 
 
