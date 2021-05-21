@@ -58,7 +58,8 @@ def getManualInvoiceDetailsById(mi_id):
 
         return_dict[key_name] = value
 
-    return_dict['mi_id'] = mi_id
+    return_dict['tv_id'] = mi_id
+    return_dict['CONTRACTOR'] = "Diego Rodriguez"  # Final Contractor name to be decided
     return return_dict
 
 
