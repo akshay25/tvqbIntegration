@@ -62,14 +62,20 @@ def _customer_ref(cust_name, tv_invoice_id):
 
 def _itemsMapper(invoice_data, items, is_manual):
     line_items = []
+
     for item in items:
-        Description = "{0}/{1}".format(
-            item['Type'],
-            item['Description']
-        ) if item.get('type') else item.get('Description')
-        item_name = Description if is_manual else "{0} {1}".format(
-            item.get('Manufacturer').upper().rstrip(),
-            item.get('Catalog').upper().rstrip())
+        
+        if is_manual:
+            Description = item.get('Description')
+            item_name = Description
+        else:
+            Description = "{0}/{1}".format(
+                item['Type'],
+                item['Description'])
+            item_name = "{0} {1}".format(
+                item.get('Manufacturer').upper().rstrip(),
+                item.get('Catalog').upper().rstrip())
+
         Qty = item['Quantity']
         Rate = item['Unit DN'] if is_manual else item['Unit CN']
         Amount = item['Total DN'] if is_manual else item['Total CN']
