@@ -13,6 +13,7 @@ from core.apis.quickBooks.authentication import refresh
 from core.apis.trackvia.bills import getBillDetailsById, updateTvBillStatus
 from core.apis.trackvia.designfee import getDesignFeeDetailsById, updateDesignFeeStatus
 from core.apis.trackvia.invoice import getFullInvoiceData, updateTvInvoiceStatus
+from core.apis.trackvia.manual_invoice import getCombinedManualInvoiceData, updateManualInvoiceStatus
 from core.designFeeEvaluator import updateDesignFeeInQB
 from core.evaluator import updateInvoiceInQB, deleteInvoiceFromQB
 from core.billEvaluator import updateBIllInQB
@@ -29,6 +30,9 @@ bill_table_id = '786'
 bill_view_id = '4205'
 designfee_table_id = '743'
 designfee_view_id = '4047'
+manual_invoice_view_id = '5374'
+manual_invoice_table_id = '740'
+
 
 
 @shared_task
@@ -77,6 +81,22 @@ def process_tv_webhook(table_id, view_id, record_id, event_type):
                 return
             refresh()
             updateDesignFeeInQB(designfee_dict, view_id)
+        elif event_type == 'AFTER_DELETE':
+            refresh()
+            deleteInvoiceFromQB(record_id)
+    elif manual_invoice_table_id == table_id:
+        if event_type == 'AFTER_CREATE':
+            logger.error('ignoring manual invoice because AFTER_CREATE event is fired {0} | {1} | {2} | {3}'.format(
+                table_id, view_id, record_id, event_type))
+            return
+        elif event_type == 'AFTER_UPDATE':
+            manual_invoice_dict = getCombinedManualInvoiceData(record_id)
+            if manual_invoice_dict.get('STATUS') != 'SENT':  # Discuss the status
+                logger.error('ignoring manual invoice as the record is not in SENT state. {0} | {1} | {2} | {3}'.format(
+                    table_id, view_id, record_id, event_type))
+                return
+            refresh()
+            updateInvoiceInQB(manual_invoice_dict, view_id)
         elif event_type == 'AFTER_DELETE':
             refresh()
             deleteInvoiceFromQB(record_id)
@@ -199,13 +219,31 @@ def process_invoice(invoice_id):
         return
     tv_invoice_id = invoices[0].tv_id
     view_id = invoices[0].view_id
-    if total_amt == balance:
-        updateTvInvoiceStatus(tv_invoice_id, 'UNPAID', view_id)
-    elif balance == 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'FULL', view_id)
-    elif balance < total_amt and balance > 0:
-        updateTvInvoiceStatus(tv_invoice_id, 'PARTIAL', view_id)
+    is_manual = invoices[0].is_manual
+
+    if is_manual:
+        updateManInvoiceStatus(total_amt, balance, tv_invoice_id)
+    else:
+        updateInvoiceStatus(total_amt, balance, tv_invoice_id, view_id)
     return
+
+
+def updateInvoiceStatus(total_amount, balance, invoice_id, view_id):
+    if total_amount == balance:
+        updateTvInvoiceStatus(invoice_id, 'UNPAID', view_id)
+    elif balance == 0:
+        updateTvInvoiceStatus(invoice_id, 'FULL', view_id)
+    elif balance < total_amount and balance > 0:
+        updateTvInvoiceStatus(invoice_id, 'PARTIAL')
+
+
+def updateManInvoiceStatus(total_amount, balance, invoice_id):
+    if total_amount == balance:
+        updateManualInvoiceStatus(invoice_id, 'UNPAID')
+    elif balance == 0:
+        updateManualInvoiceStatus(invoice_id, 'FULL')
+    elif balance < total_amount and balance > 0:
+        updateManualInvoiceStatus(invoice_id, 'PARTIAL')
 
 
 def process_DesignFee(design_fee_qb_id):
