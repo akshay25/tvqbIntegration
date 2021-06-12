@@ -36,7 +36,7 @@ def getManualInvoiceDetailsById(mi_id):
 
     if response.status_code != 200:
         logger.error("getManualInvoiceDetailsById | {0} | response status is {1}".format(mi_id, response.status_code))
-        pass
+        return
 
     response_data_dict = response.json()['data']
     field_mappings = getFieldMappings()

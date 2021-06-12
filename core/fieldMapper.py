@@ -37,10 +37,9 @@ def _invoiceMapper(invoice_data, is_manual):
                 'Type': 'StringType',
                 'StringValue': invoice_data.get('SALES ORDER')
             }
-        ]
+        ],
+        'TxnTaxDetail': _get_tax_details(invoice_data.get('SALE TAX'), invoice_data.get('INVOICE ID'), is_manual)
     }
-    if not is_manual:
-        return_dict['TxnTaxDetail'] = _get_tax_details(invoice_data.get('SALE TAX'), invoice_data.get('INVOICE ID'), is_manual)
 
     return return_dict
 
@@ -81,7 +80,7 @@ def _itemsMapper(invoice_data, items, is_manual):
         Rate = item['Unit DN'] if is_manual else item['Unit CN']
         Amount = item['Total DN'] if is_manual else item['Total CN']
         ItemRef = _get_item_ref(
-            "test item 2" if is_manual else item_name,  # Item Name to be decided
+            item_name,
             invoice_data['INVOICE ID'],
             is_manual
         )
@@ -108,7 +107,7 @@ def _itemsMapper(invoice_data, items, is_manual):
         'Description': invoice_data['WAREHOUSING %'],
         'Amount': invoice_data['INV WAREHOUSING']
     }
-    warehousing = _get_other_item(warehousing_data, invoice_data['INVOICE ID'])
+    warehousing = _get_other_item(warehousing_data, invoice_data['INVOICE ID'], is_manual)
     line_items.extend([freight, warehousing])
     return line_items
 
