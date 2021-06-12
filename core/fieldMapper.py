@@ -12,7 +12,7 @@ def tvToqb(fullInvoiceData, is_manual):
     qb_invoice = _invoiceMapper(invoice_data, is_manual)
     qb_invoice['Line'] = _itemsMapper(invoice_data, items, is_manual)
     customer_name = invoice_data.get('CONTRACTOR')
-    qb_invoice['CustomerRef'] = _customer_ref(customer_name, qb_invoice.get('DocNumber'))
+    qb_invoice['CustomerRef'] = _customer_ref(customer_name, qb_invoice.get('DocNumber'), is_manual)
     return qb_invoice
 
 
@@ -24,7 +24,6 @@ def _invoiceMapper(invoice_data, is_manual):
         'SalesTermRef': {'value': _salesTermMapper(invoice_data.get('PAYMENT TERMS'))},
         'BillEmail': {'Address': invoice_data.get('CONTRACTOR EMAIL')},
         'TxnDate': invoice_data.get('INVOICE DATE'),
-        # 'TxnTaxDetail': _get_tax_details(invoice_data.get('SALE TAX'), invoice_data.get('INVOICE ID')),
         'CustomField': [
             {
                 'DefinitionId': '1',
@@ -41,22 +40,24 @@ def _invoiceMapper(invoice_data, is_manual):
         ]
     }
     if not is_manual:
-        return_dict['TxnTaxDetail'] = _get_tax_details(invoice_data.get('SALE TAX'), invoice_data.get('INVOICE ID'))
+        return_dict['TxnTaxDetail'] = _get_tax_details(invoice_data.get('SALE TAX'), invoice_data.get('INVOICE ID'), is_manual)
 
     return return_dict
 
 
-def _customer_ref(cust_name, tv_invoice_id):
+def _customer_ref(cust_name, tv_invoice_id, is_manual):
     result = queryCustomer(cust_name)
     if 'Customer' in result:
         return {'value': result['Customer']['Id']}
     else:
         logger.error(
-            'error finding customer: {0} in Quickbooks while processing trackvia invoice: {1}'.format(cust_name,
-                                                                                                      tv_invoice_id))
+            'error finding customer: {0} in Quickbooks while processing trackvia {2} invoice: {1}'.format(
+                cust_name,
+                tv_invoice_id,
+                "manual" if is_manual else ""))
         send_email('TV-QBO integeration error',
-                   'We got an error finding customer: {0} in Quickbooks while processing trackvia invoice: {1}. Invoice creation/updation failed. Please create customer in quickbooks and retry.'.format(
-                       cust_name, tv_invoice_id))
+                   'We got an error finding customer: {0} in Quickbooks while processing trackvia {2} invoice: {1}. Invoice creation/updation failed. Please create customer in quickbooks and retry.'.format(
+                       cust_name, tv_invoice_id, "manual" if is_manual else ""))
         raise Exception()
 
 
@@ -81,7 +82,8 @@ def _itemsMapper(invoice_data, items, is_manual):
         Amount = item['Total DN'] if is_manual else item['Total CN']
         ItemRef = _get_item_ref(
             "test item 2" if is_manual else item_name,  # Item Name to be decided
-            invoice_data['INVOICE ID']
+            invoice_data['INVOICE ID'],
+            is_manual
         )
         line_item = {
             'DetailType': 'SalesItemLineDetail',
@@ -100,7 +102,7 @@ def _itemsMapper(invoice_data, items, is_manual):
         'Description': invoice_data['FREIGHT %'],
         'Amount': invoice_data['INV FREIGHT']
     }
-    freight = _get_other_item(freight_data, invoice_data['INVOICE ID'])
+    freight = _get_other_item(freight_data, invoice_data['INVOICE ID'], is_manual)
     warehousing_data = {
         'ItemName': 'WAREHOUSING',
         'Description': invoice_data['WAREHOUSING %'],
@@ -112,8 +114,8 @@ def _itemsMapper(invoice_data, items, is_manual):
 
 
 # freight and warehousing
-def _get_other_item(data, tv_invoice_id):
-    ItemRef = _get_item_ref(data['ItemName'], tv_invoice_id)
+def _get_other_item(data, tv_invoice_id, is_manual):
+    ItemRef = _get_item_ref(data['ItemName'], tv_invoice_id, is_manual)
     line_item = {
         'DetailType': 'SalesItemLineDetail',
         'Description': data['Description'],
@@ -126,7 +128,7 @@ def _get_other_item(data, tv_invoice_id):
     return line_item
 
 
-def _get_item_ref(item_name, tv_invoice_id):
+def _get_item_ref(item_name, tv_invoice_id, is_manual):
     result = queryItem(item_name)
     if 'item' in result:
         ItemRef = {
@@ -142,34 +144,40 @@ def _get_item_ref(item_name, tv_invoice_id):
             }
         except Exception as e:
             logger.error(
-                'error creating item: {0} in Quickbooks while processing trackvia invoice: {1}'.format(item_name,
-                                                                                                       tv_invoice_id))
+                'error creating item: {0} in Quickbooks while processing trackvia {2} invoice: {1}'.format(
+                    item_name,
+                    tv_invoice_id,
+                    "manual" if is_manual else ""
+                ))
             send_email('TV-QBO integeration error',
-                       'We got an error creating item: {0} in Quickbooks while processing trackvia invoice: {1}. Invoice creation/updation failed. Please check line items in trackvia and retry.'.format(
-                           item_name, tv_invoice_id))
+                       'We got an error creating item: {0} in Quickbooks while processing trackvia {2} invoice: {1}. Invoice creation/updation failed. Please check line items in trackvia and retry.'.format(
+                           item_name, tv_invoice_id, "manual" if is_manual else ""))
             raise Exception()
     return ItemRef
 
 
-def _get_tax_details(sales_tax, tv_invoice_id):
+def _get_tax_details(sales_tax, tv_invoice_id, is_manual):
     sales_tax = sales_tax.strip()
     taxquery = 'OUT_OF_SCOPE'
     if sales_tax != '':
         x = sales_tax.split(' - ')
         if len(x) != 2:
             logger.error(
-                'error finding taxcode: {0} in trackvia while parsing sales tax: {1}'.format(sales_tax, tv_invoice_id))
+                'error finding taxcode: {0} in trackvia {2} invoice while parsing sales tax: {1}'.format(
+                    sales_tax, tv_invoice_id, "manual" if is_manual else ""))
         else:
             taxquery = x[1]
     taxcode = queryTaxCode(taxquery)
     if 'TaxCode' in taxcode:
         return {'TxnTaxCodeRef': {'value': taxcode['TaxCode']['Id']}}
     else:
-        logger.error('error finding taxcode: {0} in Quickbooks while processing trackvia invoice: {1}'.format(taxcode,
-                                                                                                              tv_invoice_id))
+        logger.error('error finding taxcode: {0} in Quickbooks while processing trackvia {2} invoice: {1}'.format(
+            taxcode,
+            tv_invoice_id,
+            "manual" if is_manual else ""))
         send_email('TV-QBO integeration error',
-                   'We got an error finding taxcode: {0} in Quickbooks while processing trackvia invoice: {1}. Please update the invoice in Quickbooks manually.'.format(
-                       sales_tax, tv_invoice_id))
+                   'We got an error finding taxcode: {0} in Quickbooks while processing trackvia {2} invoice: {1}. Please update the invoice in Quickbooks manually.'.format(
+                       sales_tax, tv_invoice_id, "manual" if is_manual else ""))
 
 
 def _salesTermMapper(term):

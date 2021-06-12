@@ -5,6 +5,9 @@ from core.logger import logger
 from core.apis.trackvia.authentication import get_access_token
 
 def updateTvInvoiceStatus(invoice_id, status, view_id):
+
+    logger.info("Updating invoice status for {0} as {1}".format(invoice_id, status))
+
     #if not view_id:
     view_id = '4027'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5429&viewId={1}'.format(invoice_id, view_id)

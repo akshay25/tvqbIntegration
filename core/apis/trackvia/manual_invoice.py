@@ -59,7 +59,7 @@ def getManualInvoiceDetailsById(mi_id):
         return_dict[key_name] = value
 
     return_dict['tv_id'] = mi_id
-    return_dict['CONTRACTOR'] = "Diego Rodriguez"  # Final Contractor name to be decided
+    # return_dict['CONTRACTOR'] = "Diego Rodriguez"  # Final Contractor name to be decided
     return return_dict
 
 
@@ -154,6 +154,7 @@ def invoiceItemsFormatter(response):
 
 
 def updateManualInvoiceStatus(mi_id, status):
+    logger.info("Updating manual invoice status for {0} as {1}".format(mi_id, status))
     view_id = '5374'
     url = 'https://go.trackvia.com/accounts/21782/apps/49/tables/740/records/{0}?formId=5249&viewId={1}'\
         .format(mi_id, view_id)
